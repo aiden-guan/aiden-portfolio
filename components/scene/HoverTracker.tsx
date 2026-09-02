@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { mailbox, relics } from "@/lib/content";
@@ -11,15 +11,6 @@ import {
   REVEAL_RADIUS,
 } from "@/lib/meadow-mouse";
 
-const relicPoints = relics.map(
-  (relic) => new THREE.Vector3(relic.position[0], 0, relic.position[2]),
-);
-const mailPoint = new THREE.Vector3(
-  mailbox.position[0],
-  0,
-  mailbox.position[2],
-);
-
 export function HoverTracker({
   onHover,
   onDiscover,
@@ -29,6 +20,14 @@ export function HoverTracker({
 }) {
   const last = useRef<"grass" | "hot">("grass");
   const seen = useRef(new Set<string>());
+  const relicPoints = useMemo(
+    () => relics.map((relic) => new THREE.Vector3(relic.position[0], 0, relic.position[2])),
+    [],
+  );
+  const mailPoint = useMemo(
+    () => new THREE.Vector3(mailbox.position[0], 0, mailbox.position[2]),
+    [],
+  );
 
   useFrame(() => {
     let hot = false;

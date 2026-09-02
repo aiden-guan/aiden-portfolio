@@ -8,11 +8,18 @@ import { meadowMouse, PART_RADIUS } from "@/lib/meadow-mouse";
 
 const FIELD = 52;
 const CLEARING = 2.15;
+const NEST_RADIUS: Record<string, number> = {
+  sidespace: 1.35,
+  milliondollarleaderboard: 1.2,
+  corgi: 1.0,
+};
 const NESTS: { x: number; z: number; r: number }[] = [
   { x: 0, z: 0, r: CLEARING },
-  { x: relics[0].position[0], z: relics[0].position[2], r: 1.25 },
-  { x: relics[1].position[0], z: relics[1].position[2], r: 1.15 },
-  { x: relics[2].position[0], z: relics[2].position[2], r: 0.95 },
+  ...relics.map((relic) => ({
+    x: relic.position[0],
+    z: relic.position[2],
+    r: NEST_RADIUS[relic.id] ?? 1.1,
+  })),
   { x: mailbox.position[0], z: mailbox.position[2], r: 0.55 },
 ];
 
@@ -86,9 +93,9 @@ function mulberry32(seed: number) {
 function bladeCount(reducedMotion: boolean) {
   if (typeof window === "undefined") return 6000;
   const mobile = window.matchMedia("(max-width: 768px)").matches;
-  if (reducedMotion) return 4000;
-  if (mobile) return 7000;
-  return 17000;
+  if (reducedMotion) return 8000;
+  if (mobile) return 16000;
+  return 42000;
 }
 
 export function GrassField({ reducedMotion }: { reducedMotion: boolean }) {
@@ -96,7 +103,7 @@ export function GrassField({ reducedMotion }: { reducedMotion: boolean }) {
   const count = useMemo(() => bladeCount(reducedMotion), [reducedMotion]);
 
   const geometry = useMemo(() => {
-    const geo = new THREE.ConeGeometry(0.09, 0.52, 3);
+    const geo = new THREE.ConeGeometry(0.085, 0.56, 3);
     geo.translate(0, 0.26, 0);
     return geo;
   }, []);
@@ -134,7 +141,7 @@ export function GrassField({ reducedMotion }: { reducedMotion: boolean }) {
 
     let placed = 0;
     let attempts = 0;
-    while (placed < count && attempts < count * 6) {
+    while (placed < count && attempts < count * 8) {
       attempts += 1;
       const x = (rand() - 0.5) * FIELD;
       const z = (rand() - 0.5) * FIELD;

@@ -110,6 +110,7 @@ export function MeadowScene({
         discovered={discovered}
         onInspect={onInspect}
         onDiscover={onDiscover}
+        reducedMotion={reducedMotion}
       />
       <Rain reducedMotion={reducedMotion} />
       <HoverTracker onHover={onHover} onDiscover={onDiscover} />

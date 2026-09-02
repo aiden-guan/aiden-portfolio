@@ -247,10 +247,17 @@ body {
   display: grid;
   place-items: end center;
   padding: 0 18px 88px;
-  background: color-mix(in srgb, var(--moss) 28%, transparent);
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 42%,
+    color-mix(in srgb, var(--moss) 35%, transparent) 100%
+  );
 }
 
 .dialogue {
+  pointer-events: auto;
   width: min(560px, 100%);
   background: var(--moss);
   padding: 6px;

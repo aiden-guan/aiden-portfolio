@@ -99,6 +99,10 @@ export function Ground({
       onPointerDown={(event) => {
         meadowPointer.armed = true;
         meadowMouse.set(event.point.x, 0, event.point.z);
+      }}
+      onClick={(event) => {
+        meadowPointer.armed = true;
+        meadowMouse.set(event.point.x, 0, event.point.z);
         onProbe?.(meadowMouse);
       }}
     >

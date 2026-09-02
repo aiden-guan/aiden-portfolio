@@ -18,7 +18,7 @@ export const founder = {
   name: "Aiden Guan",
   tagline: "building things people can play with.",
   about:
-    "Aiden sits in the grass and types. He builds software that behaves like a place: markets you can walk, games that think, arenas that bark back. The work is buried here. Part the field.",
+    "Aiden sits in the grass and types. He builds software that behaves like a place: storefronts you can book, a million-pixel leaderboard you can buy, arenas that bark back. The work is buried here. Part the field.",
 };
 
 export const links = {
@@ -38,13 +38,12 @@ export const relics: Relic[] = [
     position: [-5.1, 0, 3.1],
   },
   {
-    id: "fish",
-    title: "Fish / KRAKEN",
+    id: "milliondollarleaderboard",
+    title: "Million Dollar Leaderboard",
     blurb:
-      "Six-player Literature against an engine that reads the table. Belief tracking, search, and a live seat you can actually play.",
-    href: "https://fish-engine.vercel.app",
-    github: "https://github.com/kv1514/fish-researchp12",
-    accent: "#6eb5d0",
+      "A million-pixel canvas. Buy a square, stamp your name and a link on the board, then pan and zoom the whole leaderboard.",
+    href: "https://milliondollarboard.lol",
+    accent: "#e8c547",
     position: [5.2, 0, 2.7],
   },
   {
