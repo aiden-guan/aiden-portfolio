@@ -2,6 +2,30 @@
 
 import { founder, getRelic, links, mailbox, type InspectSubject } from "@/lib/content";
 
+type DialogueAction = {
+  href: string;
+  label: string;
+  fill?: boolean;
+};
+
+function ActionLink({ href, label, fill }: DialogueAction) {
+  const external = !href.startsWith("mailto:");
+  return (
+    <a
+      className={fill ? "pixel-btn pixel-btn-fill" : "pixel-btn"}
+      href={href}
+      {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
+    >
+      {label}
+      {external ? (
+        <span className="pixel-btn-icon" aria-hidden>
+          ↗
+        </span>
+      ) : null}
+    </a>
+  );
+}
+
 export function DialogueBox({
   subject,
   onClose,
@@ -11,24 +35,36 @@ export function DialogueBox({
 }) {
   const copy =
     subject.type === "about"
-      ? { title: founder.name, body: founder.about, href: links.github, hrefLabel: "GitHub", extra: undefined }
+      ? {
+          title: founder.name,
+          body: founder.about,
+          actions: [{ href: links.github, label: "GitHub", fill: true }] satisfies DialogueAction[],
+        }
       : subject.type === "contact"
         ? {
             title: mailbox.title,
             body: mailbox.blurb,
-            href: links.github,
-            hrefLabel: "GitHub",
-            extra: { href: links.sidespace, label: "SideSpace" },
+            actions: [
+              { href: links.email, label: mailbox.email, fill: true },
+              { href: links.linkedin, label: "LinkedIn" },
+            ] satisfies DialogueAction[],
           }
         : (() => {
             const relic = getRelic(subject.id);
             if (!relic) return null;
+            const actions: DialogueAction[] = [];
+            if (relic.href) actions.push({ href: relic.href, label: "Visit", fill: true });
+            if (relic.github) {
+              actions.push({
+                href: relic.github,
+                label: relic.href ? "Source" : "GitHub",
+                fill: !relic.href,
+              });
+            }
             return {
               title: relic.collab ? `${relic.title} · collab` : relic.title,
               body: relic.blurb,
-              href: relic.href ?? relic.github,
-              hrefLabel: relic.href ? "Visit" : "GitHub",
-              extra: relic.href && relic.github ? { href: relic.github, label: "Source" } : undefined,
+              actions,
             };
           })();
 
@@ -47,22 +83,9 @@ export function DialogueBox({
           <h2 id="dialogue-title">{copy.title}</h2>
           <p className="dialogue-body">{copy.body}</p>
           <div className="dialogue-actions">
-            {copy.href ? (
-              <a className="pixel-btn pixel-btn-fill" href={copy.href} target="_blank" rel="noreferrer">
-                {copy.hrefLabel}
-                <span className="pixel-btn-icon" aria-hidden>
-                  ↗
-                </span>
-              </a>
-            ) : null}
-            {copy.extra ? (
-              <a className="pixel-btn" href={copy.extra.href} target="_blank" rel="noreferrer">
-                {copy.extra.label}
-                <span className="pixel-btn-icon" aria-hidden>
-                  ↗
-                </span>
-              </a>
-            ) : null}
+            {copy.actions.map((action) => (
+              <ActionLink key={action.href} {...action} />
+            ))}
             <button type="button" className="pixel-btn" onClick={onClose} autoFocus>
               Close
             </button>

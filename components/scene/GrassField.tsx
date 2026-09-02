@@ -90,21 +90,28 @@ function mulberry32(seed: number) {
   };
 }
 
-function bladeCount(reducedMotion: boolean) {
-  if (typeof window === "undefined") return 6000;
+function bladeSpacing(reducedMotion: boolean) {
+  if (typeof window === "undefined") return 0.32;
   const mobile = window.matchMedia("(max-width: 768px)").matches;
-  if (reducedMotion) return 8000;
-  if (mobile) return 16000;
-  return 42000;
+  if (reducedMotion) return 0.32;
+  if (mobile) return 0.26;
+  return 0.2;
 }
 
 export function GrassField({ reducedMotion }: { reducedMotion: boolean }) {
   const mesh = useRef<THREE.InstancedMesh>(null);
-  const count = useMemo(() => bladeCount(reducedMotion), [reducedMotion]);
+  const undergrowth = useRef<THREE.InstancedMesh>(null);
+  const spacing = useMemo(() => bladeSpacing(reducedMotion), [reducedMotion]);
 
   const geometry = useMemo(() => {
-    const geo = new THREE.ConeGeometry(0.085, 0.56, 3);
+    const geo = new THREE.ConeGeometry(0.1, 0.58, 3);
     geo.translate(0, 0.26, 0);
+    return geo;
+  }, []);
+
+  const shortGeometry = useMemo(() => {
+    const geo = new THREE.ConeGeometry(0.08, 0.34, 3);
+    geo.translate(0, 0.17, 0);
     return geo;
   }, []);
 
@@ -125,8 +132,7 @@ export function GrassField({ reducedMotion }: { reducedMotion: boolean }) {
     [reducedMotion],
   );
 
-  const colors = useMemo(() => {
-    const rand = mulberry32(20260902);
+  const layers = useMemo(() => {
     const dummy = new THREE.Object3D();
     const palette = [
       new THREE.Color("#1c4a32"),
@@ -136,46 +142,64 @@ export function GrassField({ reducedMotion }: { reducedMotion: boolean }) {
       new THREE.Color("#348050"),
       new THREE.Color("#3d6b45"),
     ];
-    const color = new THREE.Color();
-    const list: { matrix: THREE.Matrix4; color: THREE.Color }[] = [];
 
-    let placed = 0;
-    let attempts = 0;
-    while (placed < count && attempts < count * 8) {
-      attempts += 1;
-      const x = (rand() - 0.5) * FIELD;
-      const z = (rand() - 0.5) * FIELD;
-      if (NESTS.some((nest) => Math.hypot(x - nest.x, z - nest.z) < nest.r)) continue;
-      dummy.position.set(x, 0, z);
-      dummy.rotation.set((rand() - 0.5) * 0.25, rand() * Math.PI * 2, (rand() - 0.5) * 0.25);
-      const sy = 0.75 + rand() * 0.75;
-      dummy.scale.set(0.9 + rand() * 0.65, sy, 0.9 + rand() * 0.5);
-      dummy.updateMatrix();
-      color.copy(palette[Math.floor(rand() * palette.length)]);
-      list.push({ matrix: dummy.matrix.clone(), color: color.clone() });
-      placed += 1;
+    function plant(
+      seed: number,
+      step: number,
+      offset: number,
+      scaleY: [number, number],
+      fat: number,
+    ) {
+      const rand = mulberry32(seed);
+      const color = new THREE.Color();
+      const list: { matrix: THREE.Matrix4; color: THREE.Color }[] = [];
+      const cells = Math.ceil(FIELD / step);
+      const origin = -FIELD / 2 + offset;
+      const jitter = step * 0.38;
+      for (let ix = 0; ix < cells; ix += 1) {
+        for (let iz = 0; iz < cells; iz += 1) {
+          const x = origin + ix * step + (rand() - 0.5) * jitter;
+          const z = origin + iz * step + (rand() - 0.5) * jitter;
+          if (NESTS.some((nest) => Math.hypot(x - nest.x, z - nest.z) < nest.r)) continue;
+          dummy.position.set(x, 0, z);
+          dummy.rotation.set((rand() - 0.5) * 0.28, rand() * Math.PI * 2, (rand() - 0.5) * 0.28);
+          const sy = scaleY[0] + rand() * (scaleY[1] - scaleY[0]);
+          dummy.scale.set(fat * (0.85 + rand() * 0.4), sy, fat * (0.85 + rand() * 0.35));
+          dummy.updateMatrix();
+          color.copy(palette[Math.floor(rand() * palette.length)]);
+          list.push({ matrix: dummy.matrix.clone(), color: color.clone() });
+        }
+      }
+      return list;
     }
-    return list;
-  }, [count]);
+
+    return {
+      tall: plant(20260902, spacing, 0, [0.85, 1.55], 1),
+      short: plant(20260917, spacing, spacing * 0.5, [0.7, 1.12], 0.92),
+    };
+  }, [spacing]);
 
   useLayoutEffect(() => {
-    const instance = mesh.current;
-    if (!instance) return;
-    instance.raycast = () => {};
-    if (!instance.instanceColor) {
-      instance.instanceColor = new THREE.InstancedBufferAttribute(
-        new Float32Array(colors.length * 3),
-        3,
-      );
+    function fill(instance: THREE.InstancedMesh | null, blades: typeof layers.tall) {
+      if (!instance) return;
+      instance.raycast = () => {};
+      if (!instance.instanceColor) {
+        instance.instanceColor = new THREE.InstancedBufferAttribute(
+          new Float32Array(blades.length * 3),
+          3,
+        );
+      }
+      blades.forEach((blade, index) => {
+        instance.setMatrixAt(index, blade.matrix);
+        instance.setColorAt(index, blade.color);
+      });
+      instance.instanceMatrix.needsUpdate = true;
+      if (instance.instanceColor) instance.instanceColor.needsUpdate = true;
+      instance.count = blades.length;
     }
-    colors.forEach((blade, index) => {
-      instance.setMatrixAt(index, blade.matrix);
-      instance.setColorAt(index, blade.color);
-    });
-    instance.instanceMatrix.needsUpdate = true;
-    if (instance.instanceColor) instance.instanceColor.needsUpdate = true;
-    instance.count = colors.length;
-  }, [colors]);
+    fill(mesh.current, layers.tall);
+    fill(undergrowth.current, layers.short);
+  }, [layers]);
 
   useFrame((state) => {
     material.uniforms.uTime.value = reducedMotion ? 0 : state.clock.elapsedTime;
@@ -183,10 +207,17 @@ export function GrassField({ reducedMotion }: { reducedMotion: boolean }) {
   });
 
   return (
-    <instancedMesh
-      ref={mesh}
-      args={[geometry, material, Math.max(colors.length, 1)]}
-      frustumCulled={false}
-    />
+    <group>
+      <instancedMesh
+        ref={mesh}
+        args={[geometry, material, Math.max(layers.tall.length, 1)]}
+        frustumCulled={false}
+      />
+      <instancedMesh
+        ref={undergrowth}
+        args={[shortGeometry, material, Math.max(layers.short.length, 1)]}
+        frustumCulled={false}
+      />
+    </group>
   );
 }

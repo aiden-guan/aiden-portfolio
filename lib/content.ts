@@ -24,6 +24,8 @@ export const founder = {
 export const links = {
   github: "https://github.com/kv1514",
   sidespace: "https://www.sidespace.ad",
+  email: "mailto:aidenguan@berkeley.edu",
+  linkedin: "https://www.linkedin.com/in/aidenguan",
 };
 
 export const relics: Relic[] = [
@@ -61,7 +63,8 @@ export const relics: Relic[] = [
 export const mailbox = {
   position: [3.9, 0, -2.9] as [number, number, number],
   title: "Write",
-  blurb: "No carrier pigeon. GitHub and SideSpace are the two doors that open.",
+  blurb: "The box takes letters. Mail and LinkedIn both reach Aiden.",
+  email: "aidenguan@berkeley.edu",
 };
 
 export function getRelic(id: string) {
