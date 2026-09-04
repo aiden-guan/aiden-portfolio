@@ -4,7 +4,7 @@ import { useLayoutEffect, useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { mailbox, relics, type InspectSubject } from "@/lib/content";
-import { meadowMouse, REVEAL_RADIUS } from "@/lib/meadow-mouse";
+import { isInspectClick, meadowMouse, REVEAL_RADIUS } from "@/lib/meadow-mouse";
 
 type HoverRef = MutableRefObject<number>;
 
@@ -681,6 +681,7 @@ function RelicMesh({
         ref={group}
         onClick={(event) => {
           event.stopPropagation();
+          if (!isInspectClick()) return;
           if (meadowMouse.distanceTo(world) < REVEAL_RADIUS || discovered) {
             onInspect({ type: "relic", id });
             onDiscover(id);
@@ -711,6 +712,7 @@ function Mailbox({
       scale={1.35}
       onClick={(event) => {
         event.stopPropagation();
+        if (!isInspectClick()) return;
         onInspect({ type: "contact" });
       }}
     >

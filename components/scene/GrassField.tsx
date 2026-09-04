@@ -76,7 +76,7 @@ const bladeFrag = /* glsl */ `
     float tip = smoothstep(0.08, 0.82, vHeight);
     vec3 col = mix(vColor * 0.55, vColor * 1.05, tip);
     col = mix(col, vec3(0.12, 0.14, 0.10), vFlatten * 0.55);
-    float steps = 7.0;
+    float steps = 16.0;
     col = floor(col * steps + 0.5) / steps;
     gl_FragColor = vec4(col, 1.0);
   }
@@ -105,13 +105,13 @@ export function GrassField({ reducedMotion }: { reducedMotion: boolean }) {
   const spacing = useMemo(() => bladeSpacing(reducedMotion), [reducedMotion]);
 
   const geometry = useMemo(() => {
-    const geo = new THREE.ConeGeometry(0.1, 0.58, 3);
+    const geo = new THREE.ConeGeometry(0.1, 0.58, 5);
     geo.translate(0, 0.26, 0);
     return geo;
   }, []);
 
   const shortGeometry = useMemo(() => {
-    const geo = new THREE.ConeGeometry(0.08, 0.34, 3);
+    const geo = new THREE.ConeGeometry(0.08, 0.34, 5);
     geo.translate(0, 0.17, 0);
     return geo;
   }, []);

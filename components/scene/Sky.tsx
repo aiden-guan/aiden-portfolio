@@ -9,20 +9,26 @@ export function Sky({ reducedMotion }: { reducedMotion: boolean }) {
 
   useFrame((state) => {
     if (!moon.current || reducedMotion) return;
-    moon.current.position.y = 7.4 + Math.sin(state.clock.elapsedTime * 0.35) * 0.08;
+    moon.current.position.y = 16 + Math.sin(state.clock.elapsedTime * 0.35) * 0.12;
   });
 
   return (
-    <group ref={moon} position={[-6.8, 7.4, -7.2]}>
+    <group ref={moon} position={[-16, 16, -18]}>
       <mesh>
-        <sphereGeometry args={[0.85, 12, 12]} />
-        <meshBasicMaterial color="#e8eef8" />
+        <sphereGeometry args={[2.15, 24, 24]} />
+        <meshBasicMaterial color="#e8eef8" fog={false} />
       </mesh>
       <mesh>
-        <sphereGeometry args={[1.45, 12, 12]} />
-        <meshBasicMaterial color="#c5d4f0" transparent opacity={0.22} depthWrite={false} />
+        <sphereGeometry args={[3.6, 24, 24]} />
+        <meshBasicMaterial
+          color="#c5d4f0"
+          transparent
+          opacity={0.2}
+          depthWrite={false}
+          fog={false}
+        />
       </mesh>
-      <pointLight color="#c5d4f0" intensity={1.8} distance={18} decay={2} />
+      <pointLight color="#c5d4f0" intensity={2.1} distance={42} decay={2} />
     </group>
   );
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import { useLayoutEffect } from "react";
-import { useFrame, useThree } from "@react-three/fiber";
-import * as THREE from "three";
+import { useEffect } from "react";
+import { OrbitControls } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
 import type { InspectSubject } from "@/lib/content";
 import { mailbox, relics } from "@/lib/content";
 import { Founder } from "@/components/scene/Founder";
@@ -13,45 +13,56 @@ import { Pixelation } from "@/components/scene/Pixelation";
 import { Rain } from "@/components/scene/Rain";
 import { Relics } from "@/components/scene/Relics";
 import { Sky } from "@/components/scene/Sky";
-import { FOUNDER_RADIUS, MAIL_RADIUS, REVEAL_RADIUS } from "@/lib/meadow-mouse";
+import {
+  beginMeadowPointer,
+  endMeadowPointer,
+  FOUNDER_RADIUS,
+  MAIL_RADIUS,
+  moveMeadowPointer,
+  REVEAL_RADIUS,
+} from "@/lib/meadow-mouse";
 
-function MeadowCamera({ reducedMotion }: { reducedMotion: boolean }) {
-  const camera = useThree((state) => state.camera) as THREE.OrthographicCamera;
-  const pointer = useThree((state) => state.pointer);
-  const width = useThree((state) => state.size.width);
+function MeadowLook({ reducedMotion }: { reducedMotion: boolean }) {
+  const gl = useThree((state) => state.gl);
 
-  useLayoutEffect(() => {
-    camera.position.set(10, 15, 10);
-    camera.lookAt(0, 0.4, 0);
-    camera.updateProjectionMatrix();
-  }, [camera]);
+  useEffect(() => {
+    const el = gl.domElement;
+    const onDown = (event: PointerEvent) => {
+      beginMeadowPointer(event.clientX, event.clientY);
+    };
+    const onMove = (event: PointerEvent) => {
+      moveMeadowPointer(event.clientX, event.clientY);
+    };
+    const onUp = () => {
+      endMeadowPointer();
+    };
+    el.addEventListener("pointerdown", onDown);
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerup", onUp);
+    el.addEventListener("pointercancel", onUp);
+    return () => {
+      el.removeEventListener("pointerdown", onDown);
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerup", onUp);
+      el.removeEventListener("pointercancel", onUp);
+    };
+  }, [gl]);
 
-  useFrame(() => {
-    const zoom = width < 768 ? 34 : 48;
-    camera.zoom = zoom;
-    const baseX = 10;
-    const baseY = 15;
-    const baseZ = 10;
-    if (reducedMotion) {
-      camera.position.set(baseX, baseY, baseZ);
-    } else {
-      camera.position.x = THREE.MathUtils.lerp(
-        camera.position.x,
-        baseX + pointer.x * 0.9,
-        0.045,
-      );
-      camera.position.z = THREE.MathUtils.lerp(
-        camera.position.z,
-        baseZ - pointer.y * 0.9,
-        0.045,
-      );
-      camera.position.y = baseY;
-    }
-    camera.lookAt(0, 0.4, 0);
-    camera.updateProjectionMatrix();
-  });
-
-  return null;
+  return (
+    <OrbitControls
+      makeDefault
+      enablePan={false}
+      enableDamping={!reducedMotion}
+      dampingFactor={0.08}
+      minPolarAngle={0.28}
+      maxPolarAngle={Math.PI / 2.08}
+      minDistance={6.5}
+      maxDistance={22}
+      target={[0, 0.55, 0]}
+      rotateSpeed={0.62}
+      zoomSpeed={0.65}
+    />
+  );
 }
 
 export function MeadowScene({
@@ -69,13 +80,14 @@ export function MeadowScene({
 }) {
   return (
     <>
-      <Pixelation factor={2.2} />
-      <MeadowCamera reducedMotion={reducedMotion} />
+      <Pixelation />
+      <MeadowLook reducedMotion={reducedMotion} />
       <color attach="background" args={["#0b1522"]} />
-      <fog attach="fog" args={["#0f1c28", 22, 48]} />
-      <hemisphereLight args={["#3a5078", "#0a120e", 0.72]} />
-      <directionalLight position={[-8, 14, -4]} intensity={0.72} color="#d0dcf0" />
-      <ambientLight intensity={0.22} />
+      <fog attach="fog" args={["#0f1c28", 18, 62]} />
+      <hemisphereLight args={["#3a5078", "#0a120e", 0.78]} />
+      <directionalLight position={[-8, 14, -4]} intensity={0.95} color="#d0dcf0" />
+      <directionalLight position={[10, 6, 8]} intensity={0.28} color="#6a7a98" />
+      <ambientLight intensity={0.2} />
       <Sky reducedMotion={reducedMotion} />
       <Ground
         onProbe={(point) => {

@@ -66,8 +66,12 @@ body {
   inset: 0;
   width: 100% !important;
   height: 100% !important;
-  image-rendering: pixelated;
+  image-rendering: auto;
   touch-action: none;
+}
+
+.meadow-canvas:focus {
+  outline: none;
 }
 
 .meadow-boot {
@@ -104,8 +108,7 @@ body {
 
 .hud-plaque,
 .hud-tools,
-.hud-list,
-.hud-quest {
+.hud-list {
   pointer-events: auto;
 }
 

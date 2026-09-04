@@ -17,7 +17,7 @@ export function GameHud({
   const total = relics.length;
   const hint =
     found === 0
-      ? "Part the grass."
+      ? "Part the grass. Drag to look around."
       : found < total
         ? `${total} buried. ${found} found.`
         : "You found everything.";

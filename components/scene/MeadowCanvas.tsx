@@ -21,14 +21,16 @@ export function MeadowCanvas({
   return (
     <Canvas
       flat
-      orthographic
-      dpr={1 / 2.2}
-      camera={{ position: [10, 15, 10], zoom: 48, near: 0.1, far: 90 }}
+      dpr={[1, 2]}
+      camera={{ fov: 50, position: [9.5, 4.8, 13.2], near: 0.1, far: 110 }}
       onCreated={({ camera }) => {
-        camera.lookAt(0, 0.4, 0);
+        camera.lookAt(0, 0.55, 0);
       }}
-      gl={{ antialias: false, alpha: false, powerPreference: "high-performance" }}
+      gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
       className="meadow-canvas"
+      role="application"
+      tabIndex={0}
+      aria-label="Night meadow. Drag to look around, part the grass to find buried work."
       onPointerEnter={() => {
         meadowPointer.armed = true;
       }}

@@ -3,7 +3,12 @@
 import { useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { meadowMouse, meadowPointer, PART_RADIUS } from "@/lib/meadow-mouse";
+import {
+  isInspectClick,
+  meadowMouse,
+  meadowPointer,
+  PART_RADIUS,
+} from "@/lib/meadow-mouse";
 
 const FIELD = 70;
 
@@ -49,7 +54,7 @@ const dirtFrag = /* glsl */ `
     float part = 1.0 - smoothstep(0.0, uRadius * 1.05, length(vWorld.xz - uMouse.xz));
     col = mix(col, vec3(0.16, 0.14, 0.10), part * 0.7);
 
-    float steps = 7.0;
+    float steps = 14.0;
     col = floor(col * steps + 0.5) / steps;
     gl_FragColor = vec4(col, 1.0);
   }
@@ -103,6 +108,7 @@ export function Ground({
       onClick={(event) => {
         meadowPointer.armed = true;
         meadowMouse.set(event.point.x, 0, event.point.z);
+        if (!isInspectClick()) return;
         onProbe?.(meadowMouse);
       }}
     >
