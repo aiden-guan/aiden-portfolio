@@ -18,7 +18,7 @@ export const founder = {
   name: "Aiden Guan",
   tagline: "building things people can play with.",
   about:
-    "Aiden sits in the grass and types. He builds software that behaves like a place: storefronts you can book, a million-pixel leaderboard you can buy, arenas that bark back. The work is buried here. Part the field.",
+    "Aiden sits in the grass and types. He builds software that behaves like a place: storefronts you can book, a million-pixel leaderboard you can buy, Lime invites you can pass, arenas that bark back. The work is buried here. Part the field.",
 };
 
 export const links = {
@@ -57,6 +57,15 @@ export const relics: Relic[] = [
     collab: true,
     accent: "#e8d5a3",
     position: [-0.2, 0, -5.1],
+  },
+  {
+    id: "riderelay",
+    title: "RideRelay",
+    blurb:
+      "A community board for Lime and Veo referral invites. Listing is free. Rank is real shares — your own clicks don’t count.",
+    github: "https://github.com/aiden-guan/riderelay",
+    accent: "#32d74b",
+    position: [-4.6, 0, -3.55],
   },
 ];
 

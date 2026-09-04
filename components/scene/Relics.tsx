@@ -451,6 +451,168 @@ function CorgiProp({ hover, reducedMotion }: { hover: HoverRef; reducedMotion: b
   );
 }
 
+function LimeScooter({ hover, reducedMotion }: { hover: HoverRef; reducedMotion: boolean }) {
+  const body = useRef<THREE.Group>(null);
+  const wheels = useRef<THREE.Group>(null);
+  const stand = useRef<THREE.Mesh>(null);
+  const lamp = useRef<THREE.PointLight>(null);
+  const streaks = useRef<THREE.InstancedMesh>(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  const streakSeeds = useMemo(
+    () =>
+      Array.from({ length: 16 }, (_, i) => ({
+        x: ((i * 13) % 5) * 0.08 - 0.16,
+        y: 0.18 + (i % 4) * 0.08,
+        z: (i % 7) * 0.12,
+        speed: 1.4 + (i % 5) * 0.35,
+        phase: (i * 0.21) % 1,
+      })),
+    [],
+  );
+
+  useLayoutEffect(() => {
+    const mesh = streaks.current;
+    if (!mesh) return;
+    mesh.raycast = () => {};
+    dummy.scale.setScalar(0);
+    dummy.position.set(0, -8, 0);
+    dummy.updateMatrix();
+    for (let i = 0; i < 16; i += 1) mesh.setMatrixAt(i, dummy.matrix);
+    mesh.instanceMatrix.needsUpdate = true;
+  }, [dummy]);
+
+  useFrame((state, delta) => {
+    const t = hover.current;
+    const time = state.clock.elapsedTime;
+    if (body.current) {
+      body.current.rotation.x = THREE.MathUtils.damp(
+        body.current.rotation.x,
+        t * -0.18,
+        10,
+        delta,
+      );
+      body.current.position.y = reducedMotion ? t * 0.04 : t * (0.06 + Math.sin(time * 10) * 0.03);
+    }
+    if (wheels.current && !reducedMotion) {
+      wheels.current.children.forEach((wheel) => {
+        wheel.rotation.x += t * 14 * delta;
+      });
+    }
+    if (stand.current) {
+      stand.current.rotation.z = THREE.MathUtils.damp(
+        stand.current.rotation.z,
+        THREE.MathUtils.lerp(0.55, 0.08, t),
+        12,
+        delta,
+      );
+    }
+    if (lamp.current) lamp.current.intensity = THREE.MathUtils.lerp(1.2, 3.4, t);
+
+    const mesh = streaks.current;
+    if (mesh) {
+      streakSeeds.forEach((s, i) => {
+        const cycle = reducedMotion ? 0.35 : (time * s.speed + s.phase) % 1;
+        const alive = t * (1 - cycle);
+        dummy.position.set(s.x, s.y, -0.35 - cycle * 1.4);
+        dummy.scale.set(0.04, 0.04, 0.18 + cycle * 0.35);
+        dummy.scale.multiplyScalar(Math.max(0.001, alive));
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        mesh.setMatrixAt(i, dummy.matrix);
+      });
+      mesh.instanceMatrix.needsUpdate = true;
+    }
+  });
+
+  return (
+    <group rotation={[0, Math.PI * 0.28, 0]} scale={1.35}>
+      <pointLight
+        ref={lamp}
+        position={[0, 0.9, 0.55]}
+        color="#32d74b"
+        intensity={1.2}
+        distance={5}
+        decay={2}
+      />
+      <group ref={body}>
+        <mesh position={[0, 0.28, 0.02]}>
+          <boxGeometry args={[0.38, 0.1, 1.35]} />
+          <meshStandardMaterial color="#32d74b" roughness={0.45} emissive="#145c22" emissiveIntensity={0.35} />
+        </mesh>
+        <mesh position={[0, 0.34, 0.04]}>
+          <boxGeometry args={[0.22, 0.04, 1.05]} />
+          <meshStandardMaterial color="#1a1a1a" roughness={0.9} />
+        </mesh>
+        <mesh position={[0, 0.22, 0.52]}>
+          <boxGeometry args={[0.16, 0.16, 0.28]} />
+          <meshStandardMaterial color="#111" roughness={0.7} />
+        </mesh>
+        <mesh position={[0, 0.72, 0.58]}>
+          <boxGeometry args={[0.1, 0.95, 0.1]} />
+          <meshStandardMaterial color="#1c1c1c" roughness={0.6} />
+        </mesh>
+        <mesh position={[0, 0.78, 0.58]}>
+          <boxGeometry args={[0.14, 0.42, 0.08]} />
+          <meshStandardMaterial color="#32d74b" roughness={0.4} emissive="#32d74b" emissiveIntensity={0.25} />
+        </mesh>
+        <mesh position={[0, 1.22, 0.58]}>
+          <boxGeometry args={[0.72, 0.08, 0.08]} />
+          <meshStandardMaterial color="#111" roughness={0.55} />
+        </mesh>
+        <mesh position={[-0.34, 1.22, 0.58]}>
+          <boxGeometry args={[0.08, 0.16, 0.08]} />
+          <meshStandardMaterial color="#222" roughness={0.6} />
+        </mesh>
+        <mesh position={[0.34, 1.22, 0.58]}>
+          <boxGeometry args={[0.08, 0.16, 0.08]} />
+          <meshStandardMaterial color="#222" roughness={0.6} />
+        </mesh>
+        <mesh position={[0, 1.02, 0.64]}>
+          <boxGeometry args={[0.16, 0.16, 0.06]} />
+          <meshStandardMaterial color="#b6f06a" emissive="#32d74b" emissiveIntensity={0.7} />
+        </mesh>
+        <mesh position={[0, 1.18, 0.68]}>
+          <boxGeometry args={[0.1, 0.08, 0.08]} />
+          <meshStandardMaterial color="#f4ead5" emissive="#f4ead5" emissiveIntensity={0.8} />
+        </mesh>
+        <mesh position={[0, 0.32, -0.62]}>
+          <boxGeometry args={[0.28, 0.12, 0.18]} />
+          <meshStandardMaterial color="#32d74b" roughness={0.5} />
+        </mesh>
+        <mesh position={[0, 0.38, -0.7]}>
+          <boxGeometry args={[0.08, 0.08, 0.08]} />
+          <meshStandardMaterial color="#c45c26" emissive="#c45c26" emissiveIntensity={0.55} />
+        </mesh>
+        <mesh ref={stand} position={[0.16, 0.16, 0.05]} rotation={[0, 0, 0.55]}>
+          <boxGeometry args={[0.05, 0.32, 0.05]} />
+          <meshStandardMaterial color="#222" roughness={0.8} />
+        </mesh>
+        <group ref={wheels}>
+          <mesh position={[0, 0.2, 0.62]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.2, 0.2, 0.12, 10]} />
+            <meshStandardMaterial color="#1a1a1a" roughness={0.85} />
+          </mesh>
+          <mesh position={[0, 0.2, 0.62]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.08, 0.08, 0.14, 8]} />
+            <meshStandardMaterial color="#c5d4f0" roughness={0.4} metalness={0.3} />
+          </mesh>
+          <mesh position={[0, 0.2, -0.58]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.2, 0.2, 0.12, 10]} />
+            <meshStandardMaterial color="#1a1a1a" roughness={0.85} />
+          </mesh>
+          <mesh position={[0, 0.2, -0.58]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.08, 0.08, 0.14, 8]} />
+            <meshStandardMaterial color="#c5d4f0" roughness={0.4} metalness={0.3} />
+          </mesh>
+        </group>
+      </group>
+      <instancedMesh ref={streaks} args={[undefined, undefined, 16]} frustumCulled={false}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshBasicMaterial color="#b6f06a" transparent opacity={0.75} toneMapped={false} />
+      </instancedMesh>
+    </group>
+  );
+}
 function ProjectModel({
   id,
   hover,
@@ -464,6 +626,7 @@ function ProjectModel({
   if (id === "milliondollarleaderboard") {
     return <MillionDollarBoard hover={hover} reducedMotion={reducedMotion} />;
   }
+  if (id === "riderelay") return <LimeScooter hover={hover} reducedMotion={reducedMotion} />;
   return <CorgiProp hover={hover} reducedMotion={reducedMotion} />;
 }
 
