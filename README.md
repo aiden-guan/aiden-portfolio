@@ -4,9 +4,11 @@ An interactive portfolio that turns project browsing into a small 3D pixel
 meadow. Explore the field, drag to look around, uncover buried projects, and
 open their live or source links.
 
+## Demo
+
 [Open the live portfolio](https://aiden-portfolio-rouge.vercel.app)
 
-## What you can find
+## Features
 
 - A real-time Three.js meadow with pixelation, sky, rain, grass, and project
   relics.
