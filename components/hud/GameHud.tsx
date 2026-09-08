@@ -1,26 +1,35 @@
 "use client";
 
 import { founder, relics, type InspectSubject } from "@/lib/content";
+import { canInspect, type CutscenePhase } from "@/lib/cutscene";
 
 export function GameHud({
+  phase,
   discovered,
   showAll,
   onToggleAll,
   onInspect,
+  onSkip,
 }: {
+  phase: CutscenePhase;
   discovered: string[];
   showAll: boolean;
   onToggleAll: () => void;
   onInspect: (subject: InspectSubject) => void;
+  onSkip: () => void;
 }) {
   const found = discovered.length;
   const total = relics.length;
-  const hint =
-    found === 0
-      ? "Part the grass. Drag to look around."
+  const playable = canInspect(phase);
+  const hint = playable
+    ? found === 0
+      ? "The laptop will talk. Drag to look around."
       : found < total
         ? `${total} buried. ${found} found.`
-        : "You found everything.";
+        : "You found everything."
+    : phase === "awaiting"
+      ? "The clearing is empty."
+      : "…";
 
   return (
     <div className="hud">
@@ -30,12 +39,18 @@ export function GameHud({
       </header>
 
       <div className="hud-tools">
-        <button type="button" className="pixel-btn pixel-btn-tiny" onClick={onToggleAll}>
-          {showAll ? "Hide list" : "Show all"}
-        </button>
+        {playable ? (
+          <button type="button" className="pixel-btn pixel-btn-tiny" onClick={onToggleAll}>
+            {showAll ? "Hide list" : "Show all"}
+          </button>
+        ) : (
+          <button type="button" className="pixel-btn pixel-btn-tiny" onClick={onSkip}>
+            Skip intro
+          </button>
+        )}
       </div>
 
-      {showAll ? (
+      {showAll && playable ? (
         <nav className="hud-list" aria-label="Buried work">
           {relics.map((relic) => (
             <button

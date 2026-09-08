@@ -2,17 +2,21 @@
 
 import { useEffect } from "react";
 import { OrbitControls } from "@react-three/drei";
-import { useThree } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
+import * as THREE from "three";
 import type { InspectSubject } from "@/lib/content";
 import { mailbox, relics } from "@/lib/content";
-import { Founder } from "@/components/scene/Founder";
-import { GrassField } from "@/components/scene/GrassField";
-import { Ground } from "@/components/scene/Ground";
-import { HoverTracker } from "@/components/scene/HoverTracker";
-import { Pixelation } from "@/components/scene/Pixelation";
-import { Rain } from "@/components/scene/Rain";
-import { Relics } from "@/components/scene/Relics";
-import { Sky } from "@/components/scene/Sky";
+import {
+  canInspect,
+  canOrbit,
+  cutsceneClock,
+  HERO_CAMERA_POSITION,
+  HERO_CAMERA_TARGET,
+  isCinematic,
+  PHASE_DURATION,
+  type CursorKind,
+  type CutscenePhase,
+} from "@/lib/cutscene";
 import {
   beginMeadowPointer,
   endMeadowPointer,
@@ -21,8 +25,26 @@ import {
   moveMeadowPointer,
   REVEAL_RADIUS,
 } from "@/lib/meadow-mouse";
+import { Clearing } from "@/components/scene/Clearing";
+import { CutsceneDirector } from "@/components/scene/CutsceneDirector";
+import { Forest } from "@/components/scene/Forest";
+import { Founder } from "@/components/scene/Founder";
+import { GrassField } from "@/components/scene/GrassField";
+import { Ground } from "@/components/scene/Ground";
+import { HoverTracker } from "@/components/scene/HoverTracker";
+import { MeadowLaptop } from "@/components/scene/MacBook";
+import { Pixelation } from "@/components/scene/Pixelation";
+import { Rain } from "@/components/scene/Rain";
+import { Relics } from "@/components/scene/Relics";
+import { Sky } from "@/components/scene/Sky";
 
-function MeadowLook({ reducedMotion }: { reducedMotion: boolean }) {
+function MeadowLook({
+  reducedMotion,
+  phase,
+}: {
+  reducedMotion: boolean;
+  phase: CutscenePhase;
+}) {
   const gl = useThree((state) => state.gl);
 
   useEffect(() => {
@@ -48,17 +70,38 @@ function MeadowLook({ reducedMotion }: { reducedMotion: boolean }) {
     };
   }, [gl]);
 
+  useFrame((state, delta) => {
+    const controls = state.controls as unknown as {
+      enabled: boolean;
+      target: THREE.Vector3;
+      update: () => void;
+    } | undefined;
+    if (controls) controls.enabled = canOrbit(phase);
+    if (!isCinematic(phase) || !controls) return;
+    const k = 1 - Math.exp(-delta * 3.2);
+    state.camera.position.lerp(HERO_CAMERA_POSITION, k);
+    controls.target.lerp(HERO_CAMERA_TARGET, k);
+    if (phase === "impact") {
+      const u = THREE.MathUtils.clamp(cutsceneClock.t / PHASE_DURATION.impact, 0, 1);
+      const amp = (1 - u) * (1 - u) * 0.14;
+      state.camera.position.x += Math.sin(state.clock.elapsedTime * 86) * amp;
+      state.camera.position.y += Math.cos(state.clock.elapsedTime * 64) * amp * 0.7;
+    }
+    controls.update();
+  });
+
   return (
     <OrbitControls
       makeDefault
       enablePan={false}
-      enableDamping={!reducedMotion}
+      enabled={canOrbit(phase)}
+      enableDamping={!reducedMotion && canOrbit(phase)}
       dampingFactor={0.08}
-      minPolarAngle={0.28}
+      minPolarAngle={0.48}
       maxPolarAngle={Math.PI / 2.08}
-      minDistance={6.5}
-      maxDistance={22}
-      target={[0, 0.55, 0]}
+      minDistance={11}
+      maxDistance={32}
+      target={[HERO_CAMERA_TARGET.x, HERO_CAMERA_TARGET.y, HERO_CAMERA_TARGET.z]}
       rotateSpeed={0.62}
       zoomSpeed={0.65}
     />
@@ -67,30 +110,40 @@ function MeadowLook({ reducedMotion }: { reducedMotion: boolean }) {
 
 export function MeadowScene({
   reducedMotion,
+  phase,
   discovered,
+  onPhase,
   onInspect,
   onDiscover,
   onHover,
 }: {
   reducedMotion: boolean;
+  phase: CutscenePhase;
   discovered: string[];
+  onPhase: (phase: CutscenePhase) => void;
   onInspect: (subject: InspectSubject) => void;
   onDiscover: (id: string) => void;
-  onHover: (kind: "grass" | "hot") => void;
+  onHover: (kind: CursorKind) => void;
 }) {
+  const playable = canInspect(phase);
+
   return (
     <>
       <Pixelation />
-      <MeadowLook reducedMotion={reducedMotion} />
+      <CutsceneDirector phase={phase} onPhase={onPhase} />
+      <MeadowLook reducedMotion={reducedMotion} phase={phase} />
       <color attach="background" args={["#0b1522"]} />
-      <fog attach="fog" args={["#0f1c28", 18, 62]} />
+      <fog attach="fog" args={["#0f1c28", 34, 96]} />
       <hemisphereLight args={["#3a5078", "#0a120e", 0.78]} />
       <directionalLight position={[-8, 14, -4]} intensity={0.95} color="#d0dcf0" />
       <directionalLight position={[10, 6, 8]} intensity={0.28} color="#6a7a98" />
       <ambientLight intensity={0.2} />
       <Sky reducedMotion={reducedMotion} />
       <Ground
+        phase={phase}
+        onStartCutscene={() => onPhase("falling")}
         onProbe={(point) => {
+          if (!playable) return;
           for (const relic of relics) {
             const dist = Math.hypot(
               point.x - relic.position[0],
@@ -117,15 +170,24 @@ export function MeadowScene({
         }}
       />
       <GrassField reducedMotion={reducedMotion} />
-      <Founder onInspect={onInspect} reducedMotion={reducedMotion} />
+      <Forest />
+      <Clearing phase={phase} reducedMotion={reducedMotion} />
+      <Founder
+        onInspect={onInspect}
+        reducedMotion={reducedMotion}
+        phase={phase}
+        interactive={playable}
+      />
+      <MeadowLaptop phase={phase} reducedMotion={reducedMotion} />
       <Relics
         discovered={discovered}
+        interactive={playable}
         onInspect={onInspect}
         onDiscover={onDiscover}
         reducedMotion={reducedMotion}
       />
       <Rain reducedMotion={reducedMotion} />
-      <HoverTracker onHover={onHover} onDiscover={onDiscover} />
+      <HoverTracker phase={phase} onHover={onHover} onDiscover={onDiscover} />
     </>
   );
 }

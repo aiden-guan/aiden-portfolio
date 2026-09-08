@@ -3,10 +3,10 @@
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { grassPulse } from "@/lib/cutscene";
 import { mailbox, relics } from "@/lib/content";
 import { meadowMouse, PART_RADIUS } from "@/lib/meadow-mouse";
 
-const FIELD = 52;
 const CLEARING = 2.15;
 const NEST_RADIUS: Record<string, number> = {
   sidespace: 1.35,
@@ -24,6 +24,16 @@ const NESTS: { x: number; z: number; r: number }[] = [
   { x: mailbox.position[0], z: mailbox.position[2], r: 0.55 },
 ];
 
+const bladeUniforms = {
+  uTime: { value: 0 },
+  uMouse: { value: meadowMouse },
+  uRadius: { value: PART_RADIUS },
+  uWindStrength: { value: 1 },
+  uPulse: { value: new THREE.Vector3() },
+  uPulseRadius: { value: 2.55 },
+  uPulseStrength: { value: 0 },
+};
+
 const bladeVert = /* glsl */ `
   varying vec3 vColor;
   varying float vHeight;
@@ -33,6 +43,9 @@ const bladeVert = /* glsl */ `
   uniform vec3 uMouse;
   uniform float uRadius;
   uniform float uWindStrength;
+  uniform vec3 uPulse;
+  uniform float uPulseRadius;
+  uniform float uPulseStrength;
 
   void main() {
     #ifdef USE_INSTANCING_COLOR
@@ -48,6 +61,9 @@ const bladeVert = /* glsl */ `
     float dist = length(delta);
     float flatten = 1.0 - smoothstep(0.0, uRadius, dist);
     flatten *= flatten;
+    float pulseDist = length(worldRoot.xz - uPulse.xz);
+    float pulse = uPulseStrength * (1.0 - smoothstep(0.0, uPulseRadius, pulseDist));
+    flatten = max(flatten, pulse);
     vFlatten = flatten;
 
     vec2 dir = dist > 0.001 ? normalize(delta) : vec2(0.0, 1.0);
@@ -121,16 +137,11 @@ export function GrassField({ reducedMotion }: { reducedMotion: boolean }) {
       new THREE.ShaderMaterial({
         vertexShader: bladeVert,
         fragmentShader: bladeFrag,
-        uniforms: {
-          uTime: { value: 0 },
-          uMouse: { value: meadowMouse },
-          uRadius: { value: PART_RADIUS },
-          uWindStrength: { value: reducedMotion ? 0 : 1 },
-        },
+        uniforms: bladeUniforms,
         side: THREE.DoubleSide,
         toneMapped: false,
       }),
-    [reducedMotion],
+    [],
   );
 
   const layers = useMemo(() => {
@@ -150,17 +161,22 @@ export function GrassField({ reducedMotion }: { reducedMotion: boolean }) {
       offset: number,
       scaleY: [number, number],
       fat: number,
+      extent: number,
+      minRadius = 0,
+      maxRadius = Infinity,
     ) {
       const rand = mulberry32(seed);
       const color = new THREE.Color();
       const list: { matrix: THREE.Matrix4; color: THREE.Color }[] = [];
-      const cells = Math.ceil(FIELD / step);
-      const origin = -FIELD / 2 + offset;
+      const cells = Math.ceil(extent / step);
+      const origin = -extent / 2 + offset;
       const jitter = step * 0.38;
       for (let ix = 0; ix < cells; ix += 1) {
         for (let iz = 0; iz < cells; iz += 1) {
           const x = origin + ix * step + (rand() - 0.5) * jitter;
           const z = origin + iz * step + (rand() - 0.5) * jitter;
+          const radius = Math.hypot(x, z);
+          if (radius < minRadius || radius > maxRadius) continue;
           if (NESTS.some((nest) => Math.hypot(x - nest.x, z - nest.z) < nest.r)) continue;
           dummy.position.set(x, 0, z);
           dummy.rotation.set((rand() - 0.5) * 0.28, rand() * Math.PI * 2, (rand() - 0.5) * 0.28);
@@ -174,9 +190,45 @@ export function GrassField({ reducedMotion }: { reducedMotion: boolean }) {
       return list;
     }
 
+    const meadowR = 28;
+    const woodsR = 52;
     return {
-      tall: plant(20260902, spacing, 0, [0.85, 1.55], 1),
-      short: plant(20260917, spacing, spacing * 0.5, [0.7, 1.12], 0.92),
+      tall: [
+        ...plant(20260902, spacing, 0, [0.85, 1.55], 1, meadowR * 2, 0, meadowR),
+        ...plant(
+          20260903,
+          spacing * 1.35,
+          0,
+          [0.78, 1.35],
+          0.98,
+          woodsR * 2,
+          meadowR - 4,
+          40,
+        ),
+        ...plant(
+          20260904,
+          spacing * 1.7,
+          0,
+          [0.7, 1.18],
+          0.9,
+          woodsR * 2,
+          37,
+          woodsR,
+        ),
+      ],
+      short: [
+        ...plant(20260917, spacing, spacing * 0.5, [0.7, 1.12], 0.92, meadowR * 2, 0, meadowR),
+        ...plant(
+          20260918,
+          spacing * 1.4,
+          spacing * 0.5,
+          [0.64, 1.05],
+          0.88,
+          woodsR * 2,
+          meadowR - 4,
+          40,
+        ),
+      ],
     };
   }, [spacing]);
 
@@ -203,8 +255,11 @@ export function GrassField({ reducedMotion }: { reducedMotion: boolean }) {
   }, [layers]);
 
   useFrame((state) => {
-    material.uniforms.uTime.value = reducedMotion ? 0 : state.clock.elapsedTime;
-    material.uniforms.uWindStrength.value = reducedMotion ? 0.2 : 1;
+    bladeUniforms.uTime.value = reducedMotion ? 0 : state.clock.elapsedTime;
+    bladeUniforms.uWindStrength.value = reducedMotion ? 0.2 : 1;
+    bladeUniforms.uPulse.value.set(grassPulse.x, 0, grassPulse.z);
+    bladeUniforms.uPulseRadius.value = grassPulse.radius;
+    bladeUniforms.uPulseStrength.value = grassPulse.strength;
   });
 
   return (

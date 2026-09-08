@@ -193,7 +193,7 @@ function MillionDollarBoard({
       for (let i = 0; i < COIN_COUNT; i += 1) coins.current.setMatrixAt(i, dummy.matrix);
       coins.current.instanceMatrix.needsUpdate = true;
     }
-  }, [pixelColors]);
+  }, [dummy, pixelColors]);
 
   useFrame((state, delta) => {
     const t = hover.current;
@@ -634,6 +634,7 @@ function RelicMesh({
   id,
   position,
   discovered,
+  interactive,
   onInspect,
   onDiscover,
   reducedMotion,
@@ -641,6 +642,7 @@ function RelicMesh({
   id: string;
   position: [number, number, number];
   discovered: boolean;
+  interactive: boolean;
   onInspect: (subject: InspectSubject) => void;
   onDiscover: (id: string) => void;
   reducedMotion: boolean;
@@ -661,7 +663,7 @@ function RelicMesh({
     else linger.current = Math.max(0, linger.current - delta);
     const active = near || linger.current > 0;
     hover.current = dampToward(hover.current, active ? 1 : 0, 14, delta, reducedMotion);
-    if (near && !revealed.current) {
+    if (near && interactive && !revealed.current) {
       revealed.current = true;
       onDiscover(id);
     }
@@ -681,7 +683,7 @@ function RelicMesh({
         ref={group}
         onClick={(event) => {
           event.stopPropagation();
-          if (!isInspectClick()) return;
+          if (!interactive || !isInspectClick()) return;
           if (meadowMouse.distanceTo(world) < REVEAL_RADIUS || discovered) {
             onInspect({ type: "relic", id });
             onDiscover(id);
@@ -696,8 +698,10 @@ function RelicMesh({
 
 function Mailbox({
   onInspect,
+  interactive,
 }: {
   onInspect: (subject: InspectSubject) => void;
+  interactive: boolean;
 }) {
   const flag = useRef<THREE.Mesh>(null);
 
@@ -712,7 +716,7 @@ function Mailbox({
       scale={1.35}
       onClick={(event) => {
         event.stopPropagation();
-        if (!isInspectClick()) return;
+        if (!interactive || !isInspectClick()) return;
         onInspect({ type: "contact" });
       }}
     >
@@ -739,11 +743,13 @@ function Mailbox({
 
 export function Relics({
   discovered,
+  interactive,
   onInspect,
   onDiscover,
   reducedMotion,
 }: {
   discovered: string[];
+  interactive: boolean;
   onInspect: (subject: InspectSubject) => void;
   onDiscover: (id: string) => void;
   reducedMotion: boolean;
@@ -758,12 +764,13 @@ export function Relics({
           id={relic.id}
           position={relic.position}
           discovered={found.has(relic.id)}
+          interactive={interactive}
           onInspect={onInspect}
           onDiscover={onDiscover}
           reducedMotion={reducedMotion}
         />
       ))}
-      <Mailbox onInspect={onInspect} />
+      <Mailbox onInspect={onInspect} interactive={interactive} />
     </group>
   );
 }

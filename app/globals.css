@@ -66,6 +66,7 @@ body {
   inset: 0;
   width: 100% !important;
   height: 100% !important;
+  background: var(--sky) !important;
   image-rendering: auto;
   touch-action: none;
 }
@@ -152,11 +153,15 @@ body {
   position: absolute;
   top: 22px;
   right: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
 }
 
 .hud-list {
   position: absolute;
-  top: 70px;
+  top: 118px;
   right: 22px;
   display: flex;
   flex-direction: column;
@@ -371,6 +376,212 @@ body {
   font-size: 11px;
 }
 
+.speech-html {
+  pointer-events: none;
+  filter: drop-shadow(0 5px 0 rgba(12, 22, 16, 0.4));
+}
+
+.speech-html[data-who="aiden"],
+.speech-html[data-who="macbook"] {
+  width: max-content;
+}
+
+.macbook-speech {
+  width: max-content;
+  max-width: min(260px, 62vw);
+  transform: translate(36px, calc(-100% - 22px));
+  transform-origin: 0 100%;
+  padding-bottom: 14px;
+}
+
+.speech-bubble {
+  pointer-events: auto;
+  position: relative;
+  width: min(236px, 58vw);
+  background: var(--moss);
+  padding: 4px;
+  box-shadow:
+    3px 0 0 var(--straw),
+    -3px 0 0 var(--straw),
+    0 3px 0 var(--straw),
+    0 -3px 0 var(--straw);
+}
+
+.speech-bubble-inner {
+  position: relative;
+  padding: 10px 12px 12px;
+  background: var(--parchment);
+  color: var(--moss);
+}
+
+.speech-bubble-inner::before,
+.speech-bubble-inner::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.speech-bubble-inner::before {
+  left: 16px;
+  bottom: -13px;
+  width: 16px;
+  height: 14px;
+  background: var(--moss);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.speech-bubble-inner::after {
+  left: 18px;
+  bottom: -9px;
+  width: 12px;
+  height: 11px;
+  background: var(--parchment);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.speech-bubble[data-tail="center"] .speech-bubble-inner::before {
+  left: 50%;
+  bottom: -20px;
+  width: 22px;
+  height: 18px;
+  transform: translateX(-50%);
+}
+
+.speech-bubble[data-tail="center"] .speech-bubble-inner::after {
+  left: 50%;
+  bottom: -14px;
+  width: 16px;
+  height: 14px;
+  transform: translateX(-50%);
+}
+
+.speech-bubble[data-tail="none"] .speech-bubble-inner::before,
+.speech-bubble[data-tail="none"] .speech-bubble-inner::after {
+  display: none;
+}
+
+.world-speech {
+  pointer-events: none;
+  width: max-content;
+  max-width: min(280px, 72vw);
+  padding-bottom: 18px;
+  transform-origin: 50% 100%;
+  animation: world-speech-pop 0.22s cubic-bezier(0.2, 1.15, 0.32, 1);
+}
+
+.world-speech .speech-bubble {
+  width: max-content;
+  max-width: min(268px, 70vw);
+  pointer-events: none;
+}
+
+.world-speech .speech-bubble-inner {
+  padding: 9px 12px 11px;
+}
+
+.world-speech .speech-kicker {
+  display: none;
+}
+
+.world-speech .speech-text {
+  font-family: var(--font-display);
+  font-size: 14px;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+}
+
+@keyframes world-speech-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.speech-greeting .speech-bubble {
+  width: min(280px, 72vw);
+}
+
+.speech-kicker {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--terracotta);
+}
+
+.speech-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+  min-height: 1.4em;
+}
+
+.speech-caret {
+  display: inline-block;
+  width: 8px;
+  height: 12px;
+  margin-left: 4px;
+  background: var(--moss);
+  vertical-align: -1px;
+  animation: speech-blink 0.7s steps(1) infinite;
+}
+
+.speech-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.speech-greeting {
+  position: absolute;
+  left: 50%;
+  bottom: 88px;
+  z-index: 7;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.impact-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 18;
+  pointer-events: none;
+  opacity: 0;
+  background: transparent;
+  animation: impact-frames 380ms steps(1) both;
+}
+
+@keyframes impact-frames {
+  0% {
+    background: #f7f0dc;
+    opacity: 0.92;
+  }
+  22% {
+    background: #0c1610;
+    opacity: 0.62;
+  }
+  48% {
+    background: radial-gradient(circle at 50% 48%, #f4ead5 0%, transparent 52%);
+    opacity: 0.78;
+  }
+  100% {
+    background: transparent;
+    opacity: 0;
+  }
+}
+
+@keyframes speech-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
 .pixel-cursor {
   position: fixed;
   top: 0;
@@ -427,10 +638,13 @@ body {
 
   .hud-list {
     top: auto;
-    bottom: 102px;
+    bottom: 148px;
     right: 14px;
-    left: 14px;
+    left: auto;
+    width: min(220px, calc(100% - 28px));
     min-width: 0;
+    max-height: 38vh;
+    overflow-y: auto;
   }
 
   .hud-quest {
@@ -449,5 +663,17 @@ body {
   .pixel-btn,
   .hud-list-item {
     transition: none;
+  }
+
+  .speech-caret {
+    animation: none;
+  }
+
+  .world-speech {
+    animation: none;
+  }
+
+  .impact-overlay {
+    display: none;
   }
 }

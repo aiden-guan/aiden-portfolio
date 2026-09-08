@@ -3,14 +3,24 @@
 import { useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { grassPulse, type CutscenePhase } from "@/lib/cutscene";
 import {
   isInspectClick,
   meadowMouse,
   meadowPointer,
   PART_RADIUS,
+  PATCH_RADIUS,
 } from "@/lib/meadow-mouse";
 
-const FIELD = 70;
+const FIELD = 128;
+
+const dirtUniforms = {
+  uMouse: { value: meadowMouse },
+  uRadius: { value: PART_RADIUS },
+  uPulse: { value: new THREE.Vector3() },
+  uPulseRadius: { value: 2.55 },
+  uPulseStrength: { value: 0 },
+};
 
 const dirtVert = /* glsl */ `
   varying vec2 vUv;
@@ -28,6 +38,9 @@ const dirtFrag = /* glsl */ `
   varying vec3 vWorld;
   uniform vec3 uMouse;
   uniform float uRadius;
+  uniform vec3 uPulse;
+  uniform float uPulseRadius;
+  uniform float uPulseStrength;
 
   float hash(vec2 p) {
     return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -47,12 +60,16 @@ const dirtFrag = /* glsl */ `
   void main() {
     vec2 p = vWorld.xz * 0.55;
     float n = noise(p) * 0.55 + noise(p * 3.4) * 0.3 + noise(p * 8.0) * 0.15;
-    vec3 soil = mix(vec3(0.07, 0.09, 0.07), vec3(0.12, 0.16, 0.11), n);
-    vec3 wet = vec3(0.09, 0.12, 0.14);
-    vec3 col = mix(soil, wet, 0.35);
+    vec3 soil = mix(vec3(0.08, 0.13, 0.08), vec3(0.13, 0.2, 0.11), n);
+    vec3 wet = vec3(0.09, 0.14, 0.12);
+    vec3 col = mix(soil, wet, 0.28);
+    float woods = smoothstep(26.0, 52.0, length(vWorld.xz));
+    col = mix(col, vec3(0.05, 0.09, 0.06), woods * 0.5);
 
     float part = 1.0 - smoothstep(0.0, uRadius * 1.05, length(vWorld.xz - uMouse.xz));
     col = mix(col, vec3(0.16, 0.14, 0.10), part * 0.7);
+    float pulse = uPulseStrength * (1.0 - smoothstep(0.0, uPulseRadius, length(vWorld.xz - uPulse.xz)));
+    col = mix(col, vec3(0.09, 0.07, 0.05), pulse * 0.8);
 
     float steps = 14.0;
     col = floor(col * steps + 0.5) / steps;
@@ -61,8 +78,12 @@ const dirtFrag = /* glsl */ `
 `;
 
 export function Ground({
+  phase,
+  onStartCutscene,
   onProbe,
 }: {
+  phase: CutscenePhase;
+  onStartCutscene: () => void;
   onProbe?: (point: THREE.Vector3) => void;
 }) {
   const camera = useThree((state) => state.camera);
@@ -76,15 +97,15 @@ export function Ground({
       new THREE.ShaderMaterial({
         vertexShader: dirtVert,
         fragmentShader: dirtFrag,
-        uniforms: {
-          uMouse: { value: meadowMouse },
-          uRadius: { value: PART_RADIUS },
-        },
+        uniforms: dirtUniforms,
       }),
     [],
   );
 
   useFrame(() => {
+    dirtUniforms.uPulse.value.set(grassPulse.x, 0, grassPulse.z);
+    dirtUniforms.uPulseRadius.value = grassPulse.radius;
+    dirtUniforms.uPulseStrength.value = grassPulse.strength;
     if (!meadowPointer.armed) return;
     raycaster.setFromCamera(pointer, camera);
     if (raycaster.ray.intersectPlane(plane, hit)) {
@@ -109,6 +130,11 @@ export function Ground({
         meadowPointer.armed = true;
         meadowMouse.set(event.point.x, 0, event.point.z);
         if (!isInspectClick()) return;
+        if (phase === "awaiting") {
+          if (Math.hypot(meadowMouse.x, meadowMouse.z) < PATCH_RADIUS) onStartCutscene();
+          return;
+        }
+        if (phase !== "playable") return;
         onProbe?.(meadowMouse);
       }}
     >
