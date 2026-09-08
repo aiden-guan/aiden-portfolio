@@ -366,6 +366,17 @@ body {
   background: var(--parchment);
 }
 
+.pixel-btn-soon {
+  cursor: default;
+  opacity: 0.78;
+  pointer-events: none;
+}
+
+.pixel-btn-soon:hover,
+.pixel-btn-soon:focus-visible {
+  background: var(--moss);
+}
+
 .pixel-btn-icon {
   display: grid;
   place-items: center;
@@ -519,6 +530,7 @@ body {
   font-size: 15px;
   line-height: 1.4;
   min-height: 1.4em;
+  white-space: pre-line;
 }
 
 .speech-caret {

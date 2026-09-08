@@ -13,6 +13,7 @@ const NEST_RADIUS: Record<string, number> = {
   milliondollarleaderboard: 1.2,
   corgi: 1.0,
   riderelay: 1.2,
+  frontline: 1.35,
 };
 const NESTS: { x: number; z: number; r: number }[] = [
   { x: 0, z: 0, r: CLEARING },

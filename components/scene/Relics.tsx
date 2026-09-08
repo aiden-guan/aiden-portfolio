@@ -613,6 +613,235 @@ function LimeScooter({ hover, reducedMotion }: { hover: HoverRef; reducedMotion:
     </group>
   );
 }
+
+function PixelQuestionMark() {
+  return (
+    <group scale={1.55}>
+      <mesh position={[0.05, 0.18, 0]}>
+        <boxGeometry args={[0.08, 0.07, 0.05]} />
+        <meshBasicMaterial color="#f4ead5" toneMapped={false} />
+      </mesh>
+      <mesh position={[0.1, 0.11, 0]}>
+        <boxGeometry args={[0.07, 0.08, 0.05]} />
+        <meshBasicMaterial color="#5ec8e8" toneMapped={false} />
+      </mesh>
+      <mesh position={[0.02, 0.04, 0]}>
+        <boxGeometry args={[0.07, 0.08, 0.05]} />
+        <meshBasicMaterial color="#5ec8e8" toneMapped={false} />
+      </mesh>
+      <mesh position={[0, -0.12, 0]}>
+        <boxGeometry args={[0.07, 0.07, 0.05]} />
+        <meshBasicMaterial color="#f4ead5" toneMapped={false} />
+      </mesh>
+    </group>
+  );
+}
+
+function FloorWalk({ hover, reducedMotion }: { hover: HoverRef; reducedMotion: boolean }) {
+  const phone = useRef<THREE.Group>(null);
+  const beam = useRef<THREE.Mesh>(null);
+  const pages = useRef<THREE.Group>(null);
+  const lamp = useRef<THREE.PointLight>(null);
+  const marks = useRef<(THREE.Group | null)[]>([]);
+  const markSeeds = useMemo(
+    () =>
+      Array.from({ length: 10 }, (_, i) => ({
+        x: (i % 5) * 0.22 - 0.44,
+        z: ((i * 3) % 4) * 0.14 - 0.16,
+        speed: 0.38 + (i % 4) * 0.11,
+        phase: (i * 0.17) % 1,
+        scale: 0.72 + (i % 3) * 0.22,
+      })),
+    [],
+  );
+
+  useFrame((state, delta) => {
+    const t = hover.current;
+    const time = state.clock.elapsedTime;
+    const walk = reducedMotion ? 0.2 : time * 1.15;
+
+    if (phone.current) {
+      const orbit = reducedMotion ? 0.18 : 0.22 + t * 0.42;
+      phone.current.position.x = Math.sin(walk) * orbit;
+      phone.current.position.z = 0.82 + Math.cos(walk) * orbit * 0.72;
+      phone.current.position.y = 0.72 + t * 0.12 + (reducedMotion ? 0 : Math.sin(time * 3.2) * 0.03 * t);
+      phone.current.rotation.y = Math.atan2(-phone.current.position.x, -phone.current.position.z + 0.1);
+      phone.current.rotation.x = -0.18 - t * 0.08;
+    }
+
+    if (beam.current) {
+      const mat = beam.current.material as THREE.MeshBasicMaterial;
+      mat.opacity = THREE.MathUtils.damp(mat.opacity, t * 0.42, 10, delta);
+      beam.current.visible = t > 0.04;
+      beam.current.scale.y = 0.7 + t * 0.55;
+    }
+
+    if (pages.current) {
+      pages.current.position.y = THREE.MathUtils.damp(
+        pages.current.position.y,
+        THREE.MathUtils.lerp(0, 0.22, t),
+        10,
+        delta,
+      );
+      pages.current.rotation.x = THREE.MathUtils.damp(pages.current.rotation.x, t * -0.28, 8, delta);
+    }
+
+    if (lamp.current) lamp.current.intensity = THREE.MathUtils.lerp(1.3, 3.6, t);
+
+    markSeeds.forEach((seed, i) => {
+      const group = marks.current[i];
+      if (!group) return;
+      const cycle = reducedMotion ? 0.4 : (time * seed.speed + seed.phase) % 1.7;
+      const rise = cycle / 1.7;
+      const alive = t * (1 - rise);
+      group.position.set(
+        seed.x + Math.sin(time * 1.3 + i) * 0.1,
+        0.95 + rise * 1.45,
+        0.28 + seed.z,
+      );
+      group.rotation.y = time * 0.9 + i;
+      group.scale.setScalar(Math.max(0, alive * seed.scale));
+      group.visible = t > 0.05;
+    });
+  });
+
+  return (
+    <group rotation={[0, -Math.PI * 0.22, 0]} scale={1.18}>
+      <pointLight
+        ref={lamp}
+        position={[0.15, 1.05, 0.7]}
+        color="#5ec8e8"
+        intensity={1.3}
+        distance={5.5}
+        decay={2}
+      />
+
+      <mesh position={[0, 0.05, 0.08]} rotation={[-Math.PI / 2, 0, 0]}>
+        <boxGeometry args={[1.55, 1.15, 0.04]} />
+        <meshStandardMaterial color="#2a261c" roughness={1} />
+      </mesh>
+      <mesh position={[-0.28, 0.07, 0.42]} rotation={[-Math.PI / 2, 0, 0.2]}>
+        <boxGeometry args={[0.55, 0.08, 0.03]} />
+        <meshStandardMaterial color="#e8c547" emissive="#c45c26" emissiveIntensity={0.35} />
+      </mesh>
+      <mesh position={[0.32, 0.07, -0.18]} rotation={[-Math.PI / 2, 0, -0.35]}>
+        <boxGeometry args={[0.42, 0.08, 0.03]} />
+        <meshStandardMaterial color="#e8c547" emissive="#c45c26" emissiveIntensity={0.35} />
+      </mesh>
+
+      <mesh position={[-0.08, 0.14, -0.08]}>
+        <boxGeometry args={[0.92, 0.1, 0.7]} />
+        <meshStandardMaterial color="#5a3a22" roughness={0.95} />
+      </mesh>
+      <mesh position={[-0.08, 0.18, -0.08]}>
+        <boxGeometry args={[0.78, 0.04, 0.08]} />
+        <meshStandardMaterial color="#3a2416" roughness={1} />
+      </mesh>
+      <mesh position={[-0.22, 0.38, -0.02]}>
+        <boxGeometry args={[0.42, 0.32, 0.34]} />
+        <meshStandardMaterial color="#c4a06a" roughness={0.85} />
+      </mesh>
+      <mesh position={[0.18, 0.34, -0.16]}>
+        <boxGeometry args={[0.34, 0.26, 0.28]} />
+        <meshStandardMaterial color="#a87848" roughness={0.88} />
+      </mesh>
+      <mesh position={[-0.18, 0.56, -0.04]}>
+        <boxGeometry args={[0.28, 0.08, 0.24]} />
+        <meshStandardMaterial color="#8fbf4a" roughness={0.7} emissive="#3d6b3a" emissiveIntensity={0.2} />
+      </mesh>
+
+      <group position={[-0.62, 0.08, 0.22]}>
+        <mesh position={[0, 0.06, 0]}>
+          <boxGeometry args={[0.22, 0.08, 0.22]} />
+          <meshStandardMaterial color="#c45c26" roughness={0.55} emissive="#c45c26" emissiveIntensity={0.2} />
+        </mesh>
+        <mesh position={[0, 0.16, 0]}>
+          <boxGeometry args={[0.16, 0.12, 0.16]} />
+          <meshStandardMaterial color="#c45c26" roughness={0.55} emissive="#c45c26" emissiveIntensity={0.25} />
+        </mesh>
+        <mesh position={[0, 0.28, 0]}>
+          <boxGeometry args={[0.1, 0.14, 0.1]} />
+          <meshStandardMaterial color="#c45c26" roughness={0.55} emissive="#c45c26" emissiveIntensity={0.3} />
+        </mesh>
+        <mesh position={[0, 0.36, 0]}>
+          <boxGeometry args={[0.08, 0.05, 0.08]} />
+          <meshStandardMaterial color="#f4ead5" roughness={0.5} />
+        </mesh>
+      </group>
+
+      <group position={[0.52, 0.42, 0.18]} rotation={[0.08, -0.4, 0.08]}>
+        <mesh>
+          <boxGeometry args={[0.28, 0.38, 0.04]} />
+          <meshStandardMaterial color="#3a2a22" roughness={0.8} />
+        </mesh>
+        <group ref={pages} position={[0, 0.02, 0.03]}>
+          <mesh>
+            <boxGeometry args={[0.24, 0.32, 0.02]} />
+            <meshStandardMaterial color="#f4ead5" roughness={0.55} />
+          </mesh>
+          <mesh position={[0, 0.08, 0.02]}>
+            <boxGeometry args={[0.14, 0.03, 0.015]} />
+            <meshStandardMaterial color="#5ec8e8" emissive="#5ec8e8" emissiveIntensity={0.45} />
+          </mesh>
+          <mesh position={[-0.02, 0.0, 0.02]}>
+            <boxGeometry args={[0.16, 0.025, 0.015]} />
+            <meshStandardMaterial color="#2a2118" roughness={0.8} />
+          </mesh>
+          <mesh position={[0.01, -0.08, 0.02]}>
+            <boxGeometry args={[0.12, 0.025, 0.015]} />
+            <meshStandardMaterial color="#2a2118" roughness={0.8} />
+          </mesh>
+        </group>
+        <mesh position={[0, 0.2, 0.01]}>
+          <boxGeometry args={[0.08, 0.05, 0.05]} />
+          <meshStandardMaterial color="#c45c26" roughness={0.6} />
+        </mesh>
+      </group>
+
+      <group ref={phone} position={[0.12, 0.72, 0.82]}>
+        <mesh>
+          <boxGeometry args={[0.22, 0.4, 0.05]} />
+          <meshStandardMaterial color="#1a1c20" roughness={0.45} />
+        </mesh>
+        <mesh position={[0, 0.01, 0.03]}>
+          <boxGeometry args={[0.18, 0.32, 0.02]} />
+          <meshStandardMaterial
+            color="#0c1820"
+            emissive="#5ec8e8"
+            emissiveIntensity={0.85}
+            roughness={0.25}
+          />
+        </mesh>
+        <mesh position={[0, 0.06, 0.045]}>
+          <boxGeometry args={[0.1, 0.08, 0.01]} />
+          <meshStandardMaterial color="#f4ead5" emissive="#5ec8e8" emissiveIntensity={0.4} />
+        </mesh>
+        <mesh position={[0, -0.06, 0.045]}>
+          <boxGeometry args={[0.12, 0.04, 0.01]} />
+          <meshStandardMaterial color="#5ec8e8" emissive="#5ec8e8" emissiveIntensity={0.7} />
+        </mesh>
+      </group>
+
+      <mesh ref={beam} position={[0.05, 0.58, 0.38]} rotation={[-0.55, 0.08, 0]} visible={false}>
+        <boxGeometry args={[0.18, 0.9, 0.02]} />
+        <meshBasicMaterial color="#5ec8e8" transparent opacity={0} toneMapped={false} />
+      </mesh>
+
+      {markSeeds.map((_, i) => (
+        <group
+          key={i}
+          ref={(node) => {
+            marks.current[i] = node;
+          }}
+          visible={false}
+        >
+          <PixelQuestionMark />
+        </group>
+      ))}
+    </group>
+  );
+}
+
 function ProjectModel({
   id,
   hover,
@@ -627,6 +856,7 @@ function ProjectModel({
     return <MillionDollarBoard hover={hover} reducedMotion={reducedMotion} />;
   }
   if (id === "riderelay") return <LimeScooter hover={hover} reducedMotion={reducedMotion} />;
+  if (id === "frontline") return <FloorWalk hover={hover} reducedMotion={reducedMotion} />;
   return <CorgiProp hover={hover} reducedMotion={reducedMotion} />;
 }
 

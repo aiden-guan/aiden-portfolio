@@ -52,7 +52,7 @@ export const PHASE_DURATION: Record<CutscenePhase, number> = {
   notice: 1.85,
   pickup: 1.35,
   foundYou: 2.2,
-  fourthWall: 4.1,
+  fourthWall: 5.4,
   toCenter: 1.2,
   handoff: 0.95,
   playable: Number.POSITIVE_INFINITY,
@@ -73,7 +73,7 @@ export const PHASE_NEXT: Partial<Record<CutscenePhase, CutscenePhase>> = {
 export const AIDEN_LINES: Partial<Record<CutscenePhase, string>> = {
   notice: "Oh, there it is!",
   foundYou: "I've been looking for you.",
-  fourthWall: "Looks like we got an audience, how about you show them around?",
+  fourthWall: "Looks like we got an audience...{pause}\nhow about you show them around?",
 };
 
 export const cutsceneClock = {
@@ -206,6 +206,7 @@ export function getSubjectCopy(subject: InspectSubject) {
       body: founder.about,
       tour: founder.tourLine,
       kicker: "inspect",
+      comingSoon: false,
       actions: [{ href: links.github, label: "GitHub", fill: true }],
     };
   }
@@ -215,6 +216,7 @@ export function getSubjectCopy(subject: InspectSubject) {
       body: mailbox.blurb,
       tour: mailbox.tourLine,
       kicker: "inspect",
+      comingSoon: false,
       actions: [
         { href: links.email, label: mailbox.email, fill: true },
         { href: links.linkedin, label: "LinkedIn" },
@@ -224,19 +226,22 @@ export function getSubjectCopy(subject: InspectSubject) {
   const relic = getRelic(subject.id);
   if (!relic) return null;
   const actions: { href: string; label: string; fill?: boolean }[] = [];
-  if (relic.href) actions.push({ href: relic.href, label: "Visit", fill: true });
-  if (relic.github) {
-    actions.push({
-      href: relic.github,
-      label: relic.href ? "Source" : "GitHub",
-      fill: !relic.href,
-    });
+  if (!relic.comingSoon) {
+    if (relic.href) actions.push({ href: relic.href, label: "Visit", fill: true });
+    if (relic.github) {
+      actions.push({
+        href: relic.github,
+        label: relic.href ? "Source" : "GitHub",
+        fill: !relic.href,
+      });
+    }
   }
   return {
     title: relic.collab ? `${relic.title} · collab` : relic.title,
     body: relic.blurb,
     tour: relic.tourLine,
-    kicker: "inspect",
+    kicker: relic.comingSoon ? "coming soon" : "inspect",
+    comingSoon: Boolean(relic.comingSoon),
     actions,
   };
 }

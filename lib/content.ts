@@ -6,6 +6,7 @@ export type Relic = {
   href?: string;
   github?: string;
   collab?: boolean;
+  comingSoon?: boolean;
   accent: string;
   position: [number, number, number];
 };
@@ -25,7 +26,7 @@ export const founder = {
 };
 
 export const links = {
-  github: "https://github.com/kv1514",
+  github: "https://github.com/aiden-guan",
   sidespace: "https://www.sidespace.ad",
   email: "mailto:aidenguan@berkeley.edu",
   linkedin: "https://www.linkedin.com/in/aidenguan",
@@ -77,6 +78,15 @@ export const relics: Relic[] = [
     github: "https://github.com/aiden-guan/riderelay",
     accent: "#32d74b",
     position: [-4.6, 0, -3.55],
+  },
+  {
+    id: "frontline",
+    title: "???",
+    blurb: "Coming soon. ???",
+    tourLine: "Something new in the grass. Coming soon. ???",
+    comingSoon: true,
+    accent: "#5ec8e8",
+    position: [6.2, 0, -5.7],
   },
 ];
 

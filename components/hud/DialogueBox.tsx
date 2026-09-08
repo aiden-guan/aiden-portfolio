@@ -27,6 +27,11 @@ export function DialogueBox({
           <h2 id="dialogue-title">{copy.title}</h2>
           <p className="dialogue-body">{copy.body}</p>
           <div className="dialogue-actions">
+            {copy.comingSoon ? (
+              <span className="pixel-btn pixel-btn-fill pixel-btn-soon" aria-disabled="true">
+                Coming soon
+              </span>
+            ) : null}
             {copy.actions.map((action) => (
               <PixelAction key={action.href} {...action} />
             ))}

@@ -49,7 +49,8 @@ const SKIN = "#edbc94";
 const SHIRT = "#4d719c";
 const PANTS = "#2a3840";
 const SHOES = "#14181c";
-const HAIR = "#3d2a1c";
+const HAIR = "#2a1c14";
+const LIP = "#c47a5a";
 const EYE = "#161410";
 
 function wrapAngle(angle: number) {
@@ -456,10 +457,10 @@ export function Founder({
             <Voxel args={[0.28, 0.28, 0.26]} color={SKIN} roughness={0.78} />
             <Voxel args={[0.04, 0.07, 0.05]} color={SKIN} position={[-0.16, 0.01, 0]} roughness={0.78} />
             <Voxel args={[0.04, 0.07, 0.05]} color={SKIN} position={[0.16, 0.01, 0]} roughness={0.78} />
-            <Voxel args={[0.28, 0.08, 0.16]} color={HAIR} position={[0, 0.18, -0.05]} roughness={1} />
+            <Voxel args={[0.3, 0.13, 0.26]} color={HAIR} position={[0, 0.125, -0.025]} roughness={1} />
             <Voxel args={[0.045, 0.05, 0.03]} color={EYE} position={[-0.065, 0.0, 0.135]} roughness={0.55} />
             <Voxel args={[0.045, 0.05, 0.03]} color={EYE} position={[0.065, 0.0, 0.135]} roughness={0.55} />
-            <Voxel args={[0.05, 0.018, 0.025]} color={HAIR} position={[0, -0.06, 0.135]} roughness={0.8} />
+            <Voxel args={[0.05, 0.018, 0.02]} color={LIP} position={[0, -0.055, 0.132]} roughness={0.7} />
             <WorldSpeech phase={phase} reducedMotion={reducedMotion} />
           </group>
 
