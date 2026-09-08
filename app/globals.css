@@ -554,7 +554,7 @@ body {
   pointer-events: none;
   opacity: 0;
   background: transparent;
-  animation: impact-frames 380ms steps(1) both;
+  animation: impact-frames 560ms steps(1) both;
 }
 
 @keyframes impact-frames {

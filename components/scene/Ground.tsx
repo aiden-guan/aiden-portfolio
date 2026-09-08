@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { grassPulse, type CutscenePhase } from "@/lib/cutscene";
+import { CRATER, craterAmount, cutsceneClock, grassPulse, type CutscenePhase } from "@/lib/cutscene";
 import {
   isInspectClick,
   meadowMouse,
@@ -20,6 +20,8 @@ const dirtUniforms = {
   uPulse: { value: new THREE.Vector3() },
   uPulseRadius: { value: 2.55 },
   uPulseStrength: { value: 0 },
+  uCrater: { value: 0 },
+  uCraterRadius: { value: 2.58 },
 };
 
 const dirtVert = /* glsl */ `
@@ -41,6 +43,8 @@ const dirtFrag = /* glsl */ `
   uniform vec3 uPulse;
   uniform float uPulseRadius;
   uniform float uPulseStrength;
+  uniform float uCrater;
+  uniform float uCraterRadius;
 
   float hash(vec2 p) {
     return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -66,10 +70,15 @@ const dirtFrag = /* glsl */ `
     float woods = smoothstep(26.0, 52.0, length(vWorld.xz));
     col = mix(col, vec3(0.05, 0.09, 0.06), woods * 0.5);
 
+    float crater = length(vWorld.xz);
+    if (uCrater > 0.02 && crater < uCraterRadius * 0.98 * uCrater) discard;
+
     float part = 1.0 - smoothstep(0.0, uRadius * 1.05, length(vWorld.xz - uMouse.xz));
     col = mix(col, vec3(0.16, 0.14, 0.10), part * 0.7);
     float pulse = uPulseStrength * (1.0 - smoothstep(0.0, uPulseRadius, length(vWorld.xz - uPulse.xz)));
     col = mix(col, vec3(0.09, 0.07, 0.05), pulse * 0.8);
+    float scorch = uCrater * (1.0 - smoothstep(uCraterRadius * 0.9, uCraterRadius * 1.35, crater));
+    col = mix(col, vec3(0.08, 0.06, 0.04), scorch * 0.7);
 
     float steps = 14.0;
     col = floor(col * steps + 0.5) / steps;
@@ -106,6 +115,8 @@ export function Ground({
     dirtUniforms.uPulse.value.set(grassPulse.x, 0, grassPulse.z);
     dirtUniforms.uPulseRadius.value = grassPulse.radius;
     dirtUniforms.uPulseStrength.value = grassPulse.strength;
+    dirtUniforms.uCrater.value = craterAmount(phase, cutsceneClock.t);
+    dirtUniforms.uCraterRadius.value = CRATER.outer;
     if (!meadowPointer.armed) return;
     raycaster.setFromCamera(pointer, camera);
     if (raycaster.ray.intersectPlane(plane, hit)) {

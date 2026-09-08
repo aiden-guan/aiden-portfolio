@@ -6,7 +6,7 @@ export const meadowMouse = new THREE.Vector3(80, 0, 80);
 export const PART_RADIUS = 2.55;
 export const REVEAL_RADIUS = 2.15;
 export const FOUNDER_RADIUS = 1.85;
-export const PATCH_RADIUS = 2.45;
+export const PATCH_RADIUS = 2.7;
 export const MAIL_RADIUS = 1.15;
 
 const DRAG_PX = 7;

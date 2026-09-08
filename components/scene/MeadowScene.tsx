@@ -12,6 +12,7 @@ import {
   cutsceneClock,
   HERO_CAMERA_POSITION,
   HERO_CAMERA_TARGET,
+  IDLE_STAND,
   isCinematic,
   PHASE_DURATION,
   type CursorKind,
@@ -81,13 +82,23 @@ function MeadowLook({
     const k = 1 - Math.exp(-delta * 3.2);
     state.camera.position.lerp(HERO_CAMERA_POSITION, k);
     controls.target.lerp(HERO_CAMERA_TARGET, k);
-    if (phase === "impact") {
-      const u = THREE.MathUtils.clamp(cutsceneClock.t / PHASE_DURATION.impact, 0, 1);
-      const amp = (1 - u) * (1 - u) * 0.14;
-      state.camera.position.x += Math.sin(state.clock.elapsedTime * 86) * amp;
-      state.camera.position.y += Math.cos(state.clock.elapsedTime * 64) * amp * 0.7;
-    }
     controls.update();
+
+    if (phase === "impact" && !reducedMotion) {
+      const t = cutsceneClock.t;
+      const u = THREE.MathUtils.clamp(t / PHASE_DURATION.impact, 0, 1);
+      const decay = Math.exp(-u * 6.4);
+      const kick = Math.exp(-u * 16);
+      state.camera.position.x +=
+        (Math.sin(t * 67.1 + 0.8) * 0.18 + Math.sin(t * 103.4) * 0.07) * decay;
+      state.camera.position.y +=
+        (Math.sin(t * 79.3 + 1.7) * 0.1 + Math.sin(t * 121.8) * 0.045) * decay - kick * 0.07;
+      state.camera.position.z +=
+        (Math.sin(t * 54.6 + 0.4) * 0.14 + Math.sin(t * 91.2) * 0.055) * decay;
+      state.camera.rotation.z +=
+        (Math.sin(t * 58.4 + 1.1) * 0.012 + Math.sin(t * 88.7) * 0.005) * decay;
+      state.camera.rotation.x += Math.sin(t * 46.2 + 2.2) * 0.007 * decay;
+    }
   });
 
   return (
@@ -97,8 +108,8 @@ function MeadowLook({
       enabled={canOrbit(phase)}
       enableDamping={!reducedMotion && canOrbit(phase)}
       dampingFactor={0.08}
-      minPolarAngle={0.48}
-      maxPolarAngle={Math.PI / 2.08}
+      minPolarAngle={0.62}
+      maxPolarAngle={Math.PI / 2.05}
       minDistance={11}
       maxDistance={32}
       target={[HERO_CAMERA_TARGET.x, HERO_CAMERA_TARGET.y, HERO_CAMERA_TARGET.z]}
@@ -155,7 +166,7 @@ export function MeadowScene({
               return;
             }
           }
-          if (Math.hypot(point.x, point.z) < FOUNDER_RADIUS) {
+          if (Math.hypot(point.x - IDLE_STAND.x, point.z - IDLE_STAND.z) < FOUNDER_RADIUS) {
             onInspect({ type: "about" });
             return;
           }
@@ -169,9 +180,13 @@ export function MeadowScene({
           }
         }}
       />
-      <GrassField reducedMotion={reducedMotion} />
+      <GrassField reducedMotion={reducedMotion} phase={phase} />
       <Forest />
-      <Clearing phase={phase} reducedMotion={reducedMotion} />
+      <Clearing
+        phase={phase}
+        reducedMotion={reducedMotion}
+        onStartCutscene={() => onPhase("falling")}
+      />
       <Founder
         onInspect={onInspect}
         reducedMotion={reducedMotion}

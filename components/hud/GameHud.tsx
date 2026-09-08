@@ -28,7 +28,7 @@ export function GameHud({
         ? `${total} buried. ${found} found.`
         : "You found everything."
     : phase === "awaiting"
-      ? "The clearing is empty."
+      ? "What's that in the middle?"
       : "…";
 
   return (

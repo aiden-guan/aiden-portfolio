@@ -6,16 +6,18 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SpeechBubble } from "@/components/hud/SpeechBubble";
 import {
+  CRATER,
   cutsceneClock,
-  easeInCubic,
   easeOutCubic,
+  fallingLaptopPose,
   getSubjectCopy,
   getTourSubject,
   HELD_SCALE,
+  IDLE_STAND,
   laptopHolding,
   laptopVisible,
-  LAPTOP_FALL_Y,
-  LAPTOP_GROUND,
+  LAPTOP_CRASH,
+  LAPTOP_CRASH_EULER,
   LAPTOP_SCALE,
   PHASE_DURATION,
   type CutscenePhase,
@@ -252,10 +254,10 @@ function tourAnchor(subject: InspectSubject | null, cursor: THREE.Vector3, out: 
     return out;
   }
   if (subject?.type === "about") {
-    out.set(1.7, 1.4, 0.35);
+    out.set(IDLE_STAND.x + 1.05, 1.22, IDLE_STAND.z + 0.15);
     return out;
   }
-  out.set(cursor.x, 0.95, cursor.z);
+  out.set(cursor.x, Math.hypot(cursor.x, cursor.z) < CRATER.outer ? 1.7 : 0.95, cursor.z);
   return out;
 }
 
@@ -276,11 +278,15 @@ export function MeadowLaptop({
   const holdPos = useMemo(() => new THREE.Vector3(), []);
   const holdQuat = useMemo(() => new THREE.Quaternion(), []);
   const holdScale = useMemo(() => new THREE.Vector3(), []);
-  const groundQuat = useMemo(
-    () => new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.12, 0.35, 0)),
+  const crashQuat = useMemo(
+    () => new THREE.Quaternion().setFromEuler(LAPTOP_CRASH_EULER),
     [],
   );
+  const fallPos = useMemo(() => new THREE.Vector3(), []);
+  const fallEuler = useMemo(() => new THREE.Euler(), []);
+  const fallQuat = useMemo(() => new THREE.Quaternion(), []);
   const scratchEuler = useMemo(() => new THREE.Euler(), []);
+  const punchQuat = useMemo(() => new THREE.Quaternion(), []);
   const particles = useRef<THREE.Group>(null);
   const armed = useRef("");
   const tourRef = useRef<InspectSubject | null>(null);
@@ -319,35 +325,36 @@ export function MeadowLaptop({
     cutsceneClock.holdMatrix.decompose(holdPos, holdQuat, holdScale);
 
     if (phase === "falling") {
-      const drop = 0.22 * u + 0.78 * easeInCubic(u);
-      group.position.set(
-        Math.sin(u * 1.7) * 0.22,
-        THREE.MathUtils.lerp(LAPTOP_FALL_Y, LAPTOP_GROUND.y, drop),
-        Math.cos(u * 1.2) * 0.14,
-      );
-      scratchEuler.set(0.35 + u * 1.15, 0.2 + u * 0.85, 0.16 - u * 0.12);
+      fallingLaptopPose(u, fallPos, scratchEuler);
+      group.position.copy(fallPos);
       group.quaternion.setFromEuler(scratchEuler);
       body.scale.setScalar(LAPTOP_SCALE);
     } else if (phase === "impact") {
-      const squash = 1 - Math.sin(Math.min(u, 1) * Math.PI) * 0.28;
-      group.position.copy(LAPTOP_GROUND);
-      group.quaternion.copy(groundQuat);
+      fallingLaptopPose(1, fallPos, fallEuler);
+      fallQuat.setFromEuler(fallEuler);
+      const slam = easeOutCubic(u);
+      const punch = Math.sin(Math.min(u, 1) * Math.PI);
+      group.position.lerpVectors(fallPos, LAPTOP_CRASH, slam);
+      group.position.y -= punch * 0.18;
+      punchQuat.setFromEuler(scratchEuler.set(punch * 0.32, punch * 0.12, punch * 0.22));
+      group.quaternion.slerpQuaternions(fallQuat, crashQuat, slam);
+      group.quaternion.multiply(punchQuat);
       body.scale.set(
-        LAPTOP_SCALE * (1.12 - squash * 0.12),
-        LAPTOP_SCALE * squash,
-        LAPTOP_SCALE * (1.12 - squash * 0.12),
+        LAPTOP_SCALE * (1 + punch * 0.2),
+        LAPTOP_SCALE * (1 - punch * 0.34),
+        LAPTOP_SCALE * (1 + punch * 0.16),
       );
     } else if (attached) {
       group.position.copy(holdPos);
       group.quaternion.copy(holdQuat);
       body.scale.setScalar(HELD_SCALE);
     } else if (holding) {
-      group.position.copy(LAPTOP_GROUND);
-      group.quaternion.copy(groundQuat);
+      group.position.copy(LAPTOP_CRASH);
+      group.quaternion.copy(crashQuat);
       body.scale.setScalar(LAPTOP_SCALE);
     } else if (phase === "notice" || phase === "walkIn") {
-      group.position.copy(LAPTOP_GROUND);
-      group.quaternion.slerp(groundQuat, 0.2);
+      group.position.copy(LAPTOP_CRASH);
+      group.quaternion.copy(crashQuat);
       body.scale.setScalar(LAPTOP_SCALE);
     } else if (phase === "handoff") {
       tourAnchor(null, meadowMouse, desired);
@@ -399,7 +406,14 @@ export function MeadowLaptop({
         : 0.35;
     }
     if (particles.current) particles.current.visible = showParticles;
-    if (shadow.current) shadow.current.visible = !attached && phase !== "handoff" && phase !== "playable";
+    if (shadow.current) {
+      shadow.current.visible =
+        !attached &&
+        phase !== "falling" &&
+        phase !== "impact" &&
+        phase !== "handoff" &&
+        phase !== "playable";
+    }
     if (phase !== "playable" && tourRef.current) {
       tourRef.current = null;
       setTour(null);

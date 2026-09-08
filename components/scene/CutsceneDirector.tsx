@@ -29,6 +29,7 @@ export function CutsceneDirector({
       if (phase === "impact") {
         grassPulse.x = 0;
         grassPulse.z = 0;
+        grassPulse.radius = 3.85;
         grassPulse.strength = 1;
       }
     }

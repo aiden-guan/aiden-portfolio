@@ -4,7 +4,7 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { mailbox, relics } from "@/lib/content";
-import { canInspect, founderOnStage, type CursorKind, type CutscenePhase } from "@/lib/cutscene";
+import { canInspect, founderOnStage, IDLE_STAND, type CursorKind, type CutscenePhase } from "@/lib/cutscene";
 import {
   FOUNDER_RADIUS,
   MAIL_RADIUS,
@@ -49,7 +49,10 @@ export function HoverTracker({
           }
         }
       });
-      if (founderOnStage(phase) && Math.hypot(meadowMouse.x, meadowMouse.z) < FOUNDER_RADIUS) {
+      if (
+        founderOnStage(phase) &&
+        Math.hypot(meadowMouse.x - IDLE_STAND.x, meadowMouse.z - IDLE_STAND.z) < FOUNDER_RADIUS
+      ) {
         hot = true;
       }
       if (meadowMouse.distanceTo(mailPoint) < MAIL_RADIUS) hot = true;

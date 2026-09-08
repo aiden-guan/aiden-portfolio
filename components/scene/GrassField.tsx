@@ -3,11 +3,11 @@
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { grassPulse } from "@/lib/cutscene";
+import { CRATER, craterAmount, cutsceneClock, grassPulse, type CutscenePhase } from "@/lib/cutscene";
 import { mailbox, relics } from "@/lib/content";
 import { meadowMouse, PART_RADIUS } from "@/lib/meadow-mouse";
 
-const CLEARING = 2.15;
+const CLEARING = 2.7;
 const NEST_RADIUS: Record<string, number> = {
   sidespace: 1.35,
   milliondollarleaderboard: 1.2,
@@ -32,6 +32,8 @@ const bladeUniforms = {
   uPulse: { value: new THREE.Vector3() },
   uPulseRadius: { value: 2.55 },
   uPulseStrength: { value: 0 },
+  uCrater: { value: 0 },
+  uCraterRadius: { value: 2.58 },
 };
 
 const bladeVert = /* glsl */ `
@@ -46,6 +48,8 @@ const bladeVert = /* glsl */ `
   uniform vec3 uPulse;
   uniform float uPulseRadius;
   uniform float uPulseStrength;
+  uniform float uCrater;
+  uniform float uCraterRadius;
 
   void main() {
     #ifdef USE_INSTANCING_COLOR
@@ -64,6 +68,9 @@ const bladeVert = /* glsl */ `
     float pulseDist = length(worldRoot.xz - uPulse.xz);
     float pulse = uPulseStrength * (1.0 - smoothstep(0.0, uPulseRadius, pulseDist));
     flatten = max(flatten, pulse);
+    float craterDist = length(worldRoot.xz);
+    float crater = uCrater * (1.0 - smoothstep(uCraterRadius * 0.72, uCraterRadius * 1.08, craterDist));
+    flatten = max(flatten, crater);
     vFlatten = flatten;
 
     vec2 dir = dist > 0.001 ? normalize(delta) : vec2(0.0, 1.0);
@@ -115,7 +122,13 @@ function bladeSpacing(reducedMotion: boolean) {
   return 0.2;
 }
 
-export function GrassField({ reducedMotion }: { reducedMotion: boolean }) {
+export function GrassField({
+  reducedMotion,
+  phase,
+}: {
+  reducedMotion: boolean;
+  phase: CutscenePhase;
+}) {
   const mesh = useRef<THREE.InstancedMesh>(null);
   const undergrowth = useRef<THREE.InstancedMesh>(null);
   const spacing = useMemo(() => bladeSpacing(reducedMotion), [reducedMotion]);
@@ -260,6 +273,8 @@ export function GrassField({ reducedMotion }: { reducedMotion: boolean }) {
     bladeUniforms.uPulse.value.set(grassPulse.x, 0, grassPulse.z);
     bladeUniforms.uPulseRadius.value = grassPulse.radius;
     bladeUniforms.uPulseStrength.value = grassPulse.strength;
+    bladeUniforms.uCrater.value = craterAmount(phase, cutsceneClock.t);
+    bladeUniforms.uCraterRadius.value = CRATER.outer;
   });
 
   return (

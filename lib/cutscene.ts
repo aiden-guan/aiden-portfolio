@@ -19,29 +19,42 @@ export type CursorKind = "grass" | "hot" | "exclaim";
 
 export const CUTSCENE_STORAGE_KEY = "meadow-intro-done";
 
-export const HERO_CAMERA_POSITION = new THREE.Vector3(0, 12.8, 16.0);
-export const HERO_CAMERA_TARGET = new THREE.Vector3(0, 1.4, 0);
+export const HERO_CAMERA_POSITION = new THREE.Vector3(-2.4, 8.2, 13.4);
+export const HERO_CAMERA_TARGET = new THREE.Vector3(0, 0.25, 0.15);
+
+export const CRATER = {
+  floor: 0.52,
+  wall: 1.32,
+  rim: 1.78,
+  outer: 2.85,
+  depth: 1.22,
+  rimHeight: 0.52,
+};
 
 export const WALK_START = { x: -12.5, z: 5.2 };
-export const WALK_END = { x: -1.15, z: 0.42 };
-export const IDLE_STAND = { x: 0, z: 0 };
+/** West rim, facing the hole to grab the laptop. */
+export const WALK_END = { x: -1.78, z: 0.42 };
+/** West-south rim. Idle is sitting here after the intro, in profile to the hero camera. */
+export const IDLE_STAND = { x: -1.68, z: 0.78 };
 
-export const LAPTOP_GROUND = new THREE.Vector3(0, 0.28, 0);
-export const LAPTOP_FALL_Y = 9.4;
+export const LAPTOP_STRIKE = new THREE.Vector3(0.12, 0.08, 0.04);
+export const LAPTOP_CRASH = new THREE.Vector3(0.16, -0.48, 0.04);
+export const LAPTOP_CRASH_EULER = new THREE.Euler(1.34, 0.92, 0.5);
+export const LAPTOP_FALL_Y = 9.8;
 export const LAPTOP_SCALE = 2.05;
 export const HELD_SCALE = 0.92;
 
 export const PHASE_DURATION: Record<CutscenePhase, number> = {
   awaiting: Number.POSITIVE_INFINITY,
-  falling: 1.22,
-  impact: 0.4,
+  falling: 1.28,
+  impact: 0.62,
   walkIn: 2.35,
   notice: 1.85,
   pickup: 1.35,
   foundYou: 2.2,
   fourthWall: 4.1,
-  toCenter: 1.55,
-  handoff: 0.85,
+  toCenter: 1.2,
+  handoff: 0.95,
   playable: Number.POSITIVE_INFINITY,
 };
 
@@ -100,6 +113,21 @@ export function founderOnStage(phase: CutscenePhase) {
     phase === "handoff" ||
     phase === "playable"
   );
+}
+
+export function craterFormed(phase: CutscenePhase) {
+  return phase !== "awaiting" && phase !== "falling";
+}
+
+export function craterAmount(phase: CutscenePhase, t: number) {
+  if (!craterFormed(phase)) return 0;
+  if (phase !== "impact") return 1;
+  const u = THREE.MathUtils.clamp(t / PHASE_DURATION.impact, 0, 1);
+  return easeOutCubic(u);
+}
+
+export function founderSitting(phase: CutscenePhase) {
+  return phase === "handoff" || phase === "playable";
 }
 
 export function laptopVisible(phase: CutscenePhase) {
@@ -211,6 +239,16 @@ export function getSubjectCopy(subject: InspectSubject) {
     kicker: "inspect",
     actions,
   };
+}
+
+export function fallingLaptopPose(u: number, outPos: THREE.Vector3, outEuler: THREE.Euler) {
+  const drop = 0.18 * u + 0.82 * easeInCubic(u);
+  outPos.set(
+    Math.sin(u * 1.35) * 0.72,
+    THREE.MathUtils.lerp(LAPTOP_FALL_Y, LAPTOP_STRIKE.y, drop),
+    Math.cos(u * 0.95) * 0.4,
+  );
+  outEuler.set(0.48 + u * 1.22, 0.16 + u * 1.12, 0.28 + u * 0.34);
 }
 
 export function easeInQuad(t: number) {

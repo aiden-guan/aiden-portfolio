@@ -11,7 +11,7 @@ export function ImpactOverlay({ active }: { active: boolean }) {
       return undefined;
     }
     setVisible(true);
-    const id = window.setTimeout(() => setVisible(false), 400);
+    const id = window.setTimeout(() => setVisible(false), 560);
     return () => window.clearTimeout(id);
   }, [active]);
 
