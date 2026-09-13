@@ -565,27 +565,49 @@ body {
   z-index: 18;
   pointer-events: none;
   opacity: 0;
-  background: transparent;
-  animation: impact-frames 560ms steps(1) both;
+  overflow: hidden;
 }
 
-@keyframes impact-frames {
-  0% {
-    background: #f7f0dc;
-    opacity: 0.92;
-  }
-  22% {
-    background: #0c1610;
-    opacity: 0.62;
-  }
-  48% {
-    background: radial-gradient(circle at 50% 48%, #f4ead5 0%, transparent 52%);
-    opacity: 0.78;
-  }
-  100% {
-    background: transparent;
-    opacity: 0;
-  }
+.impact-flash,
+.impact-fire,
+.impact-shock {
+  position: absolute;
+  pointer-events: none;
+}
+
+.impact-flash {
+  inset: -8%;
+  background: #fff7e8;
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+
+.impact-fire {
+  left: 50%;
+  top: 48%;
+  width: 120vmax;
+  height: 120vmax;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 48%, #fff4d4 0%, #ffbe55 12%, #ff6a18 28%, #7a1408 52%, transparent 70%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.impact-shock {
+  left: 50%;
+  top: 46%;
+  width: 38vmax;
+  height: 38vmax;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 3px rgba(255, 236, 210, 0.55),
+    0 0 24px 8px rgba(255, 140, 48, 0.35);
+  background: radial-gradient(circle, transparent 62%, rgba(255, 214, 160, 0.28) 70%, transparent 76%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  will-change: transform, opacity;
 }
 
 @keyframes speech-blink {

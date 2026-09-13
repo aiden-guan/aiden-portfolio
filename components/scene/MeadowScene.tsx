@@ -13,8 +13,8 @@ import {
   HERO_CAMERA_POSITION,
   HERO_CAMERA_TARGET,
   IDLE_STAND,
+  impactFX,
   isCinematic,
-  PHASE_DURATION,
   type CursorKind,
   type CutscenePhase,
 } from "@/lib/cutscene";
@@ -84,20 +84,34 @@ function MeadowLook({
     controls.target.lerp(HERO_CAMERA_TARGET, k);
     controls.update();
 
-    if (phase === "impact" && !reducedMotion) {
-      const t = cutsceneClock.t;
-      const u = THREE.MathUtils.clamp(t / PHASE_DURATION.impact, 0, 1);
-      const decay = Math.exp(-u * 6.4);
-      const kick = Math.exp(-u * 16);
+    const burst = impactFX.age;
+    if (burst >= 0 && burst < 0.72 && !reducedMotion) {
+      const kick = Math.exp(-burst * 18);
+      const rumble = Math.exp(-burst * 5.2);
+      const cam = state.camera as THREE.PerspectiveCamera;
       state.camera.position.x +=
-        (Math.sin(t * 67.1 + 0.8) * 0.18 + Math.sin(t * 103.4) * 0.07) * decay;
+        kick * 0.12 +
+        (Math.sin(burst * 94.2 + 1.3) * 0.26 + Math.sin(burst * 151.6 + 0.4) * 0.1) * rumble;
       state.camera.position.y +=
-        (Math.sin(t * 79.3 + 1.7) * 0.1 + Math.sin(t * 121.8) * 0.045) * decay - kick * 0.07;
+        kick * -0.46 +
+        (Math.sin(burst * 113.8 + 2.1) * 0.16 + Math.sin(burst * 187.4) * 0.06) * rumble;
       state.camera.position.z +=
-        (Math.sin(t * 54.6 + 0.4) * 0.14 + Math.sin(t * 91.2) * 0.055) * decay;
+        kick * 0.34 +
+        (Math.sin(burst * 76.5 + 0.7) * 0.2 + Math.sin(burst * 129.2 + 1.8) * 0.08) * rumble;
       state.camera.rotation.z +=
-        (Math.sin(t * 58.4 + 1.1) * 0.012 + Math.sin(t * 88.7) * 0.005) * decay;
-      state.camera.rotation.x += Math.sin(t * 46.2 + 2.2) * 0.007 * decay;
+        kick * -0.028 +
+        (Math.sin(burst * 88.4 + 1.1) * 0.018 + Math.sin(burst * 142.6) * 0.007) * rumble;
+      state.camera.rotation.x += kick * 0.02 + Math.sin(burst * 61.3 + 2.4) * 0.01 * rumble;
+      if (cam.isPerspectiveCamera) {
+        cam.fov = 42 + kick * 11 + rumble * 2.2;
+        cam.updateProjectionMatrix();
+      }
+    } else {
+      const cam = state.camera as THREE.PerspectiveCamera;
+      if (cam.isPerspectiveCamera && Math.abs(cam.fov - 42) > 0.05) {
+        cam.fov = THREE.MathUtils.damp(cam.fov, 42, 8, delta);
+        cam.updateProjectionMatrix();
+      }
     }
   });
 

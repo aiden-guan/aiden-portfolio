@@ -115,7 +115,7 @@ export function Ground({
     dirtUniforms.uPulse.value.set(grassPulse.x, 0, grassPulse.z);
     dirtUniforms.uPulseRadius.value = grassPulse.radius;
     dirtUniforms.uPulseStrength.value = grassPulse.strength;
-    dirtUniforms.uCrater.value = craterAmount(phase, cutsceneClock.t);
+    dirtUniforms.uCrater.value = craterAmount(cutsceneClock.phase, cutsceneClock.t);
     dirtUniforms.uCraterRadius.value = CRATER.outer;
     if (!meadowPointer.armed) return;
     raycaster.setFromCamera(pointer, camera);

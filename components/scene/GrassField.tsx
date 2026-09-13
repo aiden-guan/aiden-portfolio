@@ -13,6 +13,7 @@ const NEST_RADIUS: Record<string, number> = {
   milliondollarleaderboard: 1.2,
   corgi: 1.0,
   riderelay: 1.2,
+  agnotify: 1.4,
   frontline: 1.35,
 };
 const NESTS: { x: number; z: number; r: number }[] = [
@@ -125,7 +126,6 @@ function bladeSpacing(reducedMotion: boolean) {
 
 export function GrassField({
   reducedMotion,
-  phase,
 }: {
   reducedMotion: boolean;
   phase: CutscenePhase;
@@ -274,7 +274,7 @@ export function GrassField({
     bladeUniforms.uPulse.value.set(grassPulse.x, 0, grassPulse.z);
     bladeUniforms.uPulseRadius.value = grassPulse.radius;
     bladeUniforms.uPulseStrength.value = grassPulse.strength;
-    bladeUniforms.uCrater.value = craterAmount(phase, cutsceneClock.t);
+    bladeUniforms.uCrater.value = craterAmount(cutsceneClock.phase, cutsceneClock.t);
     bladeUniforms.uCraterRadius.value = CRATER.outer;
   });
 

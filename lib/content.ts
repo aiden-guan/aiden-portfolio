@@ -20,9 +20,9 @@ export const founder = {
   name: "Aiden Guan",
   tagline: "building things people can play with.",
   about:
-    "Aiden sits in the grass and types. He builds software that behaves like a place: storefronts you can book, a million-pixel leaderboard you can buy, Lime invites you can pass, arenas that bark back. The work is buried here. Part the field.",
+    "Aiden sits in the grass and types. He's a business student, always learning more about tech and AI. He builds software that behaves like a place: storefronts you can book, a million-pixel leaderboard you can buy, referral boards students actually use, arenas that bark back. The work is buried here. Part the field.",
   tourLine:
-    "That's Aiden. He builds software that behaves like a place. Click him if you want the longer story.",
+    "That's Aiden. A business student still getting deeper into tech and AI. Click him if you want the longer story.",
 };
 
 export const links = {
@@ -60,9 +60,9 @@ export const relics: Relic[] = [
     id: "corgi",
     title: "Corgi",
     blurb:
-      "A live bark-battle arena. Webcam faces, audio as a weapon, two dogs colliding in a pixel ring. Built with Dylan.",
+      "A live bark-battle arena. Webcam faces, audio as a weapon, two dogs colliding in a pixel ring. First place at Grok Student Build Night. Built with Dylan.",
     tourLine:
-      "Corgi. A bark-battle arena — webcam faces, audio as a weapon, two dogs in a pixel ring. Built with Dylan.",
+      "Corgi. First place at Grok Student Build Night — a bark-battle arena, webcam faces, audio as a weapon. Built with Dylan.",
     github: "https://github.com/dylann4500/corgi",
     collab: true,
     accent: "#e8d5a3",
@@ -70,14 +70,25 @@ export const relics: Relic[] = [
   },
   {
     id: "riderelay",
-    title: "RideRelay",
+    title: "RewardRelay",
     blurb:
-      "A community board for Lime and Veo referral invites. Listing is free. Rank is real shares — your own clicks don’t count.",
+      "A community board for the referral programs students actually need — rides, food, money, shopping, travel, tools, phone plans. Listing is free. Rank is real shares — your own clicks don’t count.",
     tourLine:
-      "RideRelay. Lime and Veo invites on a community board. Listing is free. Rank is real shares — your own clicks don't count.",
+      "RewardRelay. Every kind of student referral, on one board. Listing is free. Rank is real shares — your own clicks don't count.",
     github: "https://github.com/aiden-guan/riderelay",
     accent: "#32d74b",
     position: [-4.6, 0, -3.55],
+  },
+  {
+    id: "agnotify",
+    title: "AGNotify",
+    blurb:
+      "A private Discord for sneaker resellers — release alerts, consignment, the group chat. First business: five hundred dollars in, forty-five thousand ARR out, then a merger. The bridge into entrepreneurship.",
+    tourLine:
+      "AGNotify. The sneaker Discord that was the first business — five hundred in, forty-five thousand ARR out. The bridge into entrepreneurship.",
+    href: "https://whop.com/agnotify",
+    accent: "#e24b4b",
+    position: [2.2, 0, -5.4],
   },
   {
     id: "frontline",

@@ -11,6 +11,7 @@ import {
   canInspect,
   cutsceneClock,
   isCinematic,
+  resetImpactFX,
   type CursorKind,
   type CutscenePhase,
 } from "@/lib/cutscene";
@@ -56,6 +57,7 @@ export default function Home() {
     cutsceneClock.phase = "playable";
     cutsceneClock.t = 0;
     cutsceneClock.hasHold = false;
+    resetImpactFX();
     setPhase("playable");
   }, []);
 
@@ -72,6 +74,7 @@ export default function Home() {
     cutsceneClock.phase = "awaiting";
     cutsceneClock.t = 0;
     cutsceneClock.hasHold = false;
+    resetImpactFX();
   }, []);
 
   useEffect(() => {
@@ -118,7 +121,7 @@ export default function Home() {
       {inspect ? (
         <DialogueBox subject={inspect} onClose={() => setInspect(null)} />
       ) : null}
-      <ImpactOverlay active={phase === "impact"} />
+      <ImpactOverlay />
       <PixelCursor kind={cursor} />
     </main>
   );

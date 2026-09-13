@@ -47,7 +47,7 @@ export const HELD_SCALE = 0.92;
 export const PHASE_DURATION: Record<CutscenePhase, number> = {
   awaiting: Number.POSITIVE_INFINITY,
   falling: 1.28,
-  impact: 0.62,
+  impact: 0.78,
   walkIn: 2.35,
   notice: 1.85,
   pickup: 1.35,
@@ -83,12 +83,29 @@ export const cutsceneClock = {
   hasHold: false,
 };
 
+/** Wall-clock age of the contact burst. -1 means the laptop has not struck yet. */
+export const impactFX = {
+  age: -1,
+};
+
 export const grassPulse = {
   x: 0,
   z: 0,
   radius: 2.55,
   strength: 0,
 };
+
+export function resetImpactFX() {
+  impactFX.age = -1;
+}
+
+export function strikeImpact() {
+  if (impactFX.age < 0) impactFX.age = 0;
+}
+
+export function impactLive() {
+  return impactFX.age >= 0;
+}
 
 export function canOrbit(phase: CutscenePhase) {
   return phase === "playable";
@@ -119,11 +136,12 @@ export function craterFormed(phase: CutscenePhase) {
   return phase !== "awaiting" && phase !== "falling";
 }
 
-export function craterAmount(phase: CutscenePhase, t: number) {
-  if (!craterFormed(phase)) return 0;
-  if (phase !== "impact") return 1;
-  const u = THREE.MathUtils.clamp(t / PHASE_DURATION.impact, 0, 1);
-  return easeOutCubic(u);
+export function craterAmount(phase: CutscenePhase, _t?: number) {
+  if (impactFX.age >= 0) {
+    const punch = Math.exp(-Math.min(impactFX.age, 3) * 16);
+    return 1 + punch * 0.4;
+  }
+  return craterFormed(phase) ? 1 : 0;
 }
 
 export function founderSitting(phase: CutscenePhase) {

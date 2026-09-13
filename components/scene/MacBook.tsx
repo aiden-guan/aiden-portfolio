@@ -14,6 +14,7 @@ import {
   getTourSubject,
   HELD_SCALE,
   IDLE_STAND,
+  impactFX,
   laptopHolding,
   laptopVisible,
   LAPTOP_CRASH,
@@ -296,53 +297,58 @@ export function MeadowLaptop({
     const group = root.current;
     const body = model.current;
     if (!group || !body) return;
-    const visible = laptopVisible(phase);
+    const visual = cutsceneClock.phase;
+    const visible = laptopVisible(visual);
     group.visible = visible;
     if (!visible) return;
 
     const t = cutsceneClock.t;
-    const duration = PHASE_DURATION[phase];
+    const duration = PHASE_DURATION[visual];
     const u = duration === Number.POSITIVE_INFINITY ? 1 : THREE.MathUtils.clamp(t / duration, 0, 1);
-    const holding = laptopHolding(phase);
-    const attached = holding && (phase !== "pickup" || u >= 0.4);
+    const holding = laptopHolding(visual);
+    const attached = holding && (visual !== "pickup" || u >= 0.4);
+    const struck = impactFX.age >= 0;
     const showParticles =
       attached ||
-      phase === "falling" ||
-      phase === "impact" ||
-      phase === "walkIn" ||
-      phase === "notice" ||
-      phase === "handoff" ||
-      phase === "playable";
+      visual === "falling" ||
+      visual === "impact" ||
+      visual === "walkIn" ||
+      visual === "notice" ||
+      visual === "handoff" ||
+      visual === "playable";
     group.scale.setScalar(1);
 
-    if (armed.current !== phase) {
-      armed.current = phase;
-      if (phase === "handoff") {
+    if (armed.current !== visual) {
+      armed.current = visual;
+      if (visual === "handoff") {
         group.getWorldPosition(handoffFrom);
       }
     }
 
     cutsceneClock.holdMatrix.decompose(holdPos, holdQuat, holdScale);
 
-    if (phase === "falling") {
+    if (visual === "falling" && !struck) {
       fallingLaptopPose(u, fallPos, scratchEuler);
       group.position.copy(fallPos);
       group.quaternion.setFromEuler(scratchEuler);
       body.scale.setScalar(LAPTOP_SCALE);
-    } else if (phase === "impact") {
+    } else if (visual === "falling" || visual === "impact") {
       fallingLaptopPose(1, fallPos, fallEuler);
       fallQuat.setFromEuler(fallEuler);
-      const slam = easeOutCubic(u);
-      const punch = Math.sin(Math.min(u, 1) * Math.PI);
+      const age = Math.max(0, impactFX.age);
+      const freeze = age < 0.05;
+      const slamAge = freeze ? 0 : age - 0.05;
+      const slam = freeze ? 0.12 : 1 - Math.exp(-slamAge * 18);
+      const squash = freeze ? 1 : Math.exp(-slamAge * 13);
       group.position.lerpVectors(fallPos, LAPTOP_CRASH, slam);
-      group.position.y -= punch * 0.18;
-      punchQuat.setFromEuler(scratchEuler.set(punch * 0.32, punch * 0.12, punch * 0.22));
-      group.quaternion.slerpQuaternions(fallQuat, crashQuat, slam);
+      group.position.y -= squash * 0.28;
+      punchQuat.setFromEuler(scratchEuler.set(squash * 0.42, squash * 0.16, squash * 0.28));
+      group.quaternion.slerpQuaternions(fallQuat, crashQuat, Math.min(1, slam + 0.2));
       group.quaternion.multiply(punchQuat);
       body.scale.set(
-        LAPTOP_SCALE * (1 + punch * 0.2),
-        LAPTOP_SCALE * (1 - punch * 0.34),
-        LAPTOP_SCALE * (1 + punch * 0.16),
+        LAPTOP_SCALE * (1 + squash * 0.42),
+        LAPTOP_SCALE * (1 - squash * 0.58),
+        LAPTOP_SCALE * (1 + squash * 0.3),
       );
     } else if (attached) {
       group.position.copy(holdPos);
@@ -352,11 +358,11 @@ export function MeadowLaptop({
       group.position.copy(LAPTOP_CRASH);
       group.quaternion.copy(crashQuat);
       body.scale.setScalar(LAPTOP_SCALE);
-    } else if (phase === "notice" || phase === "walkIn") {
+    } else if (visual === "notice" || visual === "walkIn") {
       group.position.copy(LAPTOP_CRASH);
       group.quaternion.copy(crashQuat);
       body.scale.setScalar(LAPTOP_SCALE);
-    } else if (phase === "handoff") {
+    } else if (visual === "handoff") {
       tourAnchor(null, meadowMouse, desired);
       const fly = easeOutCubic(u);
       group.position.lerpVectors(handoffFrom, desired, fly);
@@ -391,10 +397,10 @@ export function MeadowLaptop({
 
     if (lid.current) {
       const open =
-        phase === "falling"
+        visual === "falling" && !struck
           ? 0.72 + u * 0.18
-          : phase === "impact"
-            ? 0.95
+          : visual === "falling" || visual === "impact"
+            ? 0.55
             : attached
               ? 0.88
               : 1.18;
@@ -409,12 +415,12 @@ export function MeadowLaptop({
     if (shadow.current) {
       shadow.current.visible =
         !attached &&
-        phase !== "falling" &&
-        phase !== "impact" &&
-        phase !== "handoff" &&
-        phase !== "playable";
+        visual !== "falling" &&
+        visual !== "impact" &&
+        visual !== "handoff" &&
+        visual !== "playable";
     }
-    if (phase !== "playable" && tourRef.current) {
+    if (visual !== "playable" && tourRef.current) {
       tourRef.current = null;
       setTour(null);
     }
