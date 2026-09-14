@@ -131,8 +131,8 @@ function MeadowLook({
       dampingFactor={0.08}
       minPolarAngle={0.62}
       maxPolarAngle={Math.PI / 2.05}
-      minDistance={compact ? 14 : 11}
-      maxDistance={compact ? 36 : 32}
+      minDistance={compact ? 18 : 11}
+      maxDistance={compact ? 42 : 32}
       target={[HERO_CAMERA_TARGET.x, HERO_CAMERA_TARGET.y, HERO_CAMERA_TARGET.z]}
       rotateSpeed={0.62}
       zoomSpeed={0.65}

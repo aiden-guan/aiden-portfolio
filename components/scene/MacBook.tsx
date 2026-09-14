@@ -443,8 +443,9 @@ export function MeadowLaptop({
       </group>
       {phase === "playable" && copy ? (
         <Html
-          position={compact ? [0.2, 1.62, 0.18] : [0.72, 1.28, 0.28]}
+          position={compact ? [0.15, 1.55, 0.16] : [0.72, 1.28, 0.28]}
           sprite
+          distanceFactor={compact ? 10 : undefined}
           zIndexRange={compact ? [3, 1] : [12, 4]}
           style={{ pointerEvents: compact ? "auto" : "none" }}
         >

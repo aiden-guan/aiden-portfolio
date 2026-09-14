@@ -20,10 +20,10 @@ export type CursorKind = "grass" | "hot" | "exclaim";
 export const CUTSCENE_STORAGE_KEY = "meadow-intro-done";
 
 export const HERO_CAMERA_POSITION = new THREE.Vector3(-2.4, 8.2, 13.4);
-export const HERO_CAMERA_POSITION_COMPACT = new THREE.Vector3(-2.5, 8.6, 14.6);
+export const HERO_CAMERA_POSITION_COMPACT = new THREE.Vector3(-3.4, 11.4, 20.2);
 export const HERO_CAMERA_TARGET = new THREE.Vector3(0, 0.25, 0.15);
 export const HERO_CAMERA_FOV = 42;
-export const HERO_CAMERA_FOV_COMPACT = 36;
+export const HERO_CAMERA_FOV_COMPACT = 42;
 
 export function heroCameraPosition(compact: boolean) {
   return compact ? HERO_CAMERA_POSITION_COMPACT : HERO_CAMERA_POSITION;

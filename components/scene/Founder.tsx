@@ -21,6 +21,7 @@ import {
   type CutscenePhase,
 } from "@/lib/cutscene";
 import { isInspectClick, meadowMouse, plantMeadowProbe } from "@/lib/meadow-mouse";
+import { useCompactScene } from "@/lib/use-coarse-pointer";
 import { HitVolume } from "@/components/scene/HitVolume";
 
 /** World height ≈ 2.4. Chunky voxel proportions so he matches the meadow props. */
@@ -156,6 +157,7 @@ function WorldSpeech({
   phase: CutscenePhase;
   reducedMotion: boolean;
 }) {
+  const compact = useCompactScene();
   const spoken = aidenLine(phase);
   const show = Boolean(spoken) && founderOnStage(phase);
   if (!show) return null;
@@ -167,6 +169,7 @@ function WorldSpeech({
       sprite
       occlude={false}
       pointerEvents="none"
+      distanceFactor={compact ? 10 : undefined}
       zIndexRange={[22, 8]}
       style={{ pointerEvents: "none" }}
     >
