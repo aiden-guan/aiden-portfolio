@@ -20,7 +20,8 @@ import {
   WALK_START,
   type CutscenePhase,
 } from "@/lib/cutscene";
-import { isInspectClick, meadowMouse } from "@/lib/meadow-mouse";
+import { isInspectClick, meadowMouse, plantMeadowProbe } from "@/lib/meadow-mouse";
+import { HitVolume } from "@/components/scene/HitVolume";
 
 /** World height ≈ 2.4. Chunky voxel proportions so he matches the meadow props. */
 const BODY = 2.4;
@@ -434,6 +435,10 @@ export function Founder({
       ref={root}
       position={[WALK_START.x, 0, WALK_START.z]}
       visible={false}
+      onPointerDown={(event) => {
+        event.stopPropagation();
+        plantMeadowProbe(event.point.x, event.point.z);
+      }}
       onClick={(event) => {
         event.stopPropagation();
         if (!interactive || !isInspectClick()) return;
@@ -441,6 +446,7 @@ export function Founder({
       }}
       onPointerOver={(event) => event.stopPropagation()}
     >
+      <HitVolume radius={0.9} height={2.4} y={1.15} />
       <group ref={torso}>
         <group scale={BODY}>
           <mesh ref={shadow} position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>

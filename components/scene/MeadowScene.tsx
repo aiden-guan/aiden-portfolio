@@ -9,8 +9,8 @@ import { mailbox, relics } from "@/lib/content";
 import {
   canInspect,
   canOrbit,
-  cutsceneClock,
-  HERO_CAMERA_POSITION,
+  heroCameraFov,
+  heroCameraPosition,
   HERO_CAMERA_TARGET,
   IDLE_STAND,
   impactFX,
@@ -18,14 +18,17 @@ import {
   type CursorKind,
   type CutscenePhase,
 } from "@/lib/cutscene";
+import { isCoarsePointer } from "@/lib/device";
 import {
   beginMeadowPointer,
+  freezeMeadowProbe,
   endMeadowPointer,
   FOUNDER_RADIUS,
   MAIL_RADIUS,
   moveMeadowPointer,
   REVEAL_RADIUS,
 } from "@/lib/meadow-mouse";
+import { useCompactScene } from "@/lib/use-coarse-pointer";
 import { Clearing } from "@/components/scene/Clearing";
 import { CutsceneDirector } from "@/components/scene/CutsceneDirector";
 import { Forest } from "@/components/scene/Forest";
@@ -47,6 +50,9 @@ function MeadowLook({
   phase: CutscenePhase;
 }) {
   const gl = useThree((state) => state.gl);
+  const compact = useCompactScene();
+  const home = heroCameraPosition(compact);
+  const fov = heroCameraFov(compact);
 
   useEffect(() => {
     const el = gl.domElement;
@@ -57,7 +63,8 @@ function MeadowLook({
       moveMeadowPointer(event.clientX, event.clientY);
     };
     const onUp = () => {
-      endMeadowPointer();
+      if (isCoarsePointer()) freezeMeadowProbe();
+      else endMeadowPointer();
     };
     el.addEventListener("pointerdown", onDown);
     el.addEventListener("pointermove", onMove);
@@ -80,7 +87,7 @@ function MeadowLook({
     if (controls) controls.enabled = canOrbit(phase);
     if (!isCinematic(phase) || !controls) return;
     const k = 1 - Math.exp(-delta * 3.2);
-    state.camera.position.lerp(HERO_CAMERA_POSITION, k);
+    state.camera.position.lerp(home, k);
     controls.target.lerp(HERO_CAMERA_TARGET, k);
     controls.update();
 
@@ -103,13 +110,13 @@ function MeadowLook({
         (Math.sin(burst * 88.4 + 1.1) * 0.018 + Math.sin(burst * 142.6) * 0.007) * rumble;
       state.camera.rotation.x += kick * 0.02 + Math.sin(burst * 61.3 + 2.4) * 0.01 * rumble;
       if (cam.isPerspectiveCamera) {
-        cam.fov = 42 + kick * 11 + rumble * 2.2;
+        cam.fov = fov + kick * 11 + rumble * 2.2;
         cam.updateProjectionMatrix();
       }
     } else {
       const cam = state.camera as THREE.PerspectiveCamera;
-      if (cam.isPerspectiveCamera && Math.abs(cam.fov - 42) > 0.05) {
-        cam.fov = THREE.MathUtils.damp(cam.fov, 42, 8, delta);
+      if (cam.isPerspectiveCamera && Math.abs(cam.fov - fov) > 0.05) {
+        cam.fov = THREE.MathUtils.damp(cam.fov, fov, 8, delta);
         cam.updateProjectionMatrix();
       }
     }
@@ -124,8 +131,8 @@ function MeadowLook({
       dampingFactor={0.08}
       minPolarAngle={0.62}
       maxPolarAngle={Math.PI / 2.05}
-      minDistance={11}
-      maxDistance={32}
+      minDistance={compact ? 14 : 11}
+      maxDistance={compact ? 36 : 32}
       target={[HERO_CAMERA_TARGET.x, HERO_CAMERA_TARGET.y, HERO_CAMERA_TARGET.z]}
       rotateSpeed={0.62}
       zoomSpeed={0.65}
@@ -136,7 +143,6 @@ function MeadowLook({
 export function MeadowScene({
   reducedMotion,
   phase,
-  discovered,
   onPhase,
   onInspect,
   onDiscover,
@@ -144,13 +150,13 @@ export function MeadowScene({
 }: {
   reducedMotion: boolean;
   phase: CutscenePhase;
-  discovered: string[];
   onPhase: (phase: CutscenePhase) => void;
   onInspect: (subject: InspectSubject) => void;
   onDiscover: (id: string) => void;
   onHover: (kind: CursorKind) => void;
 }) {
   const playable = canInspect(phase);
+  const compact = useCompactScene();
 
   return (
     <>
@@ -207,9 +213,8 @@ export function MeadowScene({
         phase={phase}
         interactive={playable}
       />
-      <MeadowLaptop phase={phase} reducedMotion={reducedMotion} />
+      <MeadowLaptop phase={phase} reducedMotion={reducedMotion} compact={compact} />
       <Relics
-        discovered={discovered}
         interactive={playable}
         onInspect={onInspect}
         onDiscover={onDiscover}

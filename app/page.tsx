@@ -65,6 +65,7 @@ export default function Home() {
     (subject: InspectSubject) => {
       if (!canInspect(phase)) return;
       setInspect(subject);
+      setShowAll(false);
       if (subject.type === "relic") onDiscover(subject.id);
     },
     [onDiscover, phase],
@@ -104,7 +105,6 @@ export default function Home() {
       <MeadowCanvas
         reducedMotion={reducedMotion}
         phase={phase}
-        discovered={discovered}
         onPhase={goPhase}
         onInspect={onInspect}
         onDiscover={onDiscover}

@@ -4,7 +4,8 @@ import { useLayoutEffect, useMemo, useRef, type MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { mailbox, relics, type InspectSubject } from "@/lib/content";
-import { isInspectClick, meadowMouse, REVEAL_RADIUS } from "@/lib/meadow-mouse";
+import { isInspectClick, meadowMouse, plantMeadowProbe, REVEAL_RADIUS } from "@/lib/meadow-mouse";
+import { HitVolume } from "@/components/scene/HitVolume";
 
 type HoverRef = MutableRefObject<number>;
 
@@ -1075,7 +1076,6 @@ function ProjectModel({
 function RelicMesh({
   id,
   position,
-  discovered,
   interactive,
   onInspect,
   onDiscover,
@@ -1083,7 +1083,6 @@ function RelicMesh({
 }: {
   id: string;
   position: [number, number, number];
-  discovered: boolean;
   interactive: boolean;
   onInspect: (subject: InspectSubject) => void;
   onDiscover: (id: string) => void;
@@ -1120,20 +1119,23 @@ function RelicMesh({
   });
 
   return (
-    <group position={position}>
-      <group
-        ref={group}
-        onClick={(event) => {
-          event.stopPropagation();
-          if (!interactive || !isInspectClick()) return;
-          if (meadowMouse.distanceTo(world) < REVEAL_RADIUS || discovered) {
-            onInspect({ type: "relic", id });
-            onDiscover(id);
-          }
-        }}
-      >
+    <group
+      position={position}
+      onPointerDown={(event) => {
+        event.stopPropagation();
+        plantMeadowProbe(event.point.x, event.point.z);
+      }}
+      onClick={(event) => {
+        event.stopPropagation();
+        if (!interactive || !isInspectClick()) return;
+        onInspect({ type: "relic", id });
+        onDiscover(id);
+      }}
+    >
+      <group ref={group}>
         <ProjectModel id={id} hover={hover} reducedMotion={reducedMotion} />
       </group>
+      <HitVolume radius={1.28} />
     </group>
   );
 }
@@ -1156,12 +1158,17 @@ function Mailbox({
     <group
       position={mailbox.position}
       scale={1.35}
+      onPointerDown={(event) => {
+        event.stopPropagation();
+        plantMeadowProbe(event.point.x, event.point.z);
+      }}
       onClick={(event) => {
         event.stopPropagation();
         if (!interactive || !isInspectClick()) return;
         onInspect({ type: "contact" });
       }}
     >
+      <HitVolume radius={0.85} height={1.7} y={0.85} />
       <mesh position={[0, 0.42, 0]}>
         <boxGeometry args={[0.1, 0.84, 0.1]} />
         <meshStandardMaterial color="#1a1814" roughness={1} />
@@ -1184,20 +1191,16 @@ function Mailbox({
 }
 
 export function Relics({
-  discovered,
   interactive,
   onInspect,
   onDiscover,
   reducedMotion,
 }: {
-  discovered: string[];
   interactive: boolean;
   onInspect: (subject: InspectSubject) => void;
   onDiscover: (id: string) => void;
   reducedMotion: boolean;
 }) {
-  const found = useMemo(() => new Set(discovered), [discovered]);
-
   return (
     <group>
       {relics.map((relic) => (
@@ -1205,7 +1208,6 @@ export function Relics({
           key={relic.id}
           id={relic.id}
           position={relic.position}
-          discovered={found.has(relic.id)}
           interactive={interactive}
           onInspect={onInspect}
           onDiscover={onDiscover}

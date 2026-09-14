@@ -10,7 +10,7 @@ import {
   impactFX,
   type CutscenePhase,
 } from "@/lib/cutscene";
-import { isInspectClick, meadowMouse, meadowPointer } from "@/lib/meadow-mouse";
+import { isInspectClick, plantMeadowProbe } from "@/lib/meadow-mouse";
 
 const DIRT_COUNT = 42;
 const ROCK_COUNT = 18;
@@ -287,18 +287,20 @@ export function Clearing({
         position={[0, 0.06, 0]}
         visible={phase === "awaiting"}
         onPointerMove={(event) => {
-          meadowPointer.armed = true;
-          meadowMouse.set(event.point.x, 0, event.point.z);
+          plantMeadowProbe(event.point.x, event.point.z);
+        }}
+        onPointerDown={(event) => {
+          event.stopPropagation();
+          plantMeadowProbe(event.point.x, event.point.z);
         }}
         onClick={(event) => {
-          meadowPointer.armed = true;
-          meadowMouse.set(event.point.x, 0, event.point.z);
+          plantMeadowProbe(event.point.x, event.point.z);
           event.stopPropagation();
           if (!isInspectClick()) return;
           onStartCutscene();
         }}
       >
-        <circleGeometry args={[2.7, 16]} />
+        <circleGeometry args={[3.2, 16]} />
         <meshBasicMaterial transparent opacity={0.001} depthWrite={false} />
       </mesh>
       <group ref={patch}>

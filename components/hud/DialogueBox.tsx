@@ -15,12 +15,19 @@ export function DialogueBox({
   if (!copy) return null;
 
   return (
-    <div className="dialogue-root">
+    <div
+      className="dialogue-root"
+      onClick={onClose}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") onClose();
+      }}
+    >
       <div
         className="dialogue"
         role="dialog"
         aria-modal="true"
         aria-labelledby="dialogue-title"
+        onClick={(event) => event.stopPropagation()}
       >
         <div className="dialogue-inner">
           <p className="dialogue-kicker">{copy.kicker}</p>

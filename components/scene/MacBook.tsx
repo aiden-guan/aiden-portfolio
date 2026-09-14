@@ -265,9 +265,11 @@ function tourAnchor(subject: InspectSubject | null, cursor: THREE.Vector3, out: 
 export function MeadowLaptop({
   phase,
   reducedMotion,
+  compact = false,
 }: {
   phase: CutscenePhase;
   reducedMotion: boolean;
+  compact?: boolean;
 }) {
   const root = useRef<THREE.Group>(null);
   const model = useRef<THREE.Group>(null);
@@ -441,19 +443,19 @@ export function MeadowLaptop({
       </group>
       {phase === "playable" && copy ? (
         <Html
-          position={[0.72, 1.28, 0.28]}
+          position={compact ? [0.2, 1.62, 0.18] : [0.72, 1.28, 0.28]}
           sprite
-          zIndexRange={[12, 4]}
-          style={{ pointerEvents: "none" }}
+          zIndexRange={compact ? [3, 1] : [12, 4]}
+          style={{ pointerEvents: compact ? "auto" : "none" }}
         >
           <div className="speech-html macbook-speech" data-who="macbook">
             <SpeechBubble
               key={copy.title}
               speaker="MacBook"
               text={copy.tour}
-              actions={copy.actions}
+              actions={compact ? undefined : copy.actions}
               reducedMotion={reducedMotion}
-              tail="left"
+              tail={compact ? "center" : "left"}
             />
           </div>
         </Html>

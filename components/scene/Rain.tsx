@@ -3,12 +3,12 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { isCompactScene } from "@/lib/device";
 
 function rainCount(reducedMotion: boolean) {
   if (typeof window === "undefined") return 400;
-  const mobile = window.matchMedia("(max-width: 768px)").matches;
   if (reducedMotion) return 180;
-  if (mobile) return 420;
+  if (isCompactScene()) return 420;
   return 1200;
 }
 

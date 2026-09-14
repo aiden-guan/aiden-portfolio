@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Tiny5 } from "next/font/google";
 import "./globals.css";
 
@@ -18,6 +18,13 @@ const siteUrl =
   (process.env.VERCEL_PROJECT_PRODUCTION_URL
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
     : "http://localhost:3000");
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0b1522",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

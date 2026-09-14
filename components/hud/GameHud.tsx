@@ -2,6 +2,7 @@
 
 import { founder, relics, type InspectSubject } from "@/lib/content";
 import { canInspect, type CutscenePhase } from "@/lib/cutscene";
+import { useCoarsePointer } from "@/lib/use-coarse-pointer";
 
 export function GameHud({
   phase,
@@ -18,36 +19,43 @@ export function GameHud({
   onInspect: (subject: InspectSubject) => void;
   onSkip: () => void;
 }) {
+  const coarse = useCoarsePointer();
   const found = discovered.length;
   const total = relics.length;
   const playable = canInspect(phase);
   const hint = playable
     ? found === 0
-      ? "The laptop will talk. Drag to look around."
+      ? coarse
+        ? "Tap the grass. Drag to look around."
+        : "The laptop will talk. Drag to look around."
       : found < total
         ? `${total} buried. ${found} found.`
         : "You found everything."
     : phase === "awaiting"
-      ? "What's that in the middle?"
+      ? coarse
+        ? "Tap the empty patch."
+        : "What's that in the middle?"
       : "…";
 
   return (
     <div className="hud">
-      <header className="hud-plaque">
-        <p className="hud-name">{founder.name}</p>
-        <p className="hud-tag">{founder.tagline}</p>
-      </header>
+      <div className="hud-chrome">
+        <header className="hud-plaque">
+          <p className="hud-name">{founder.name}</p>
+          <p className="hud-tag">{founder.tagline}</p>
+        </header>
 
-      <div className="hud-tools">
-        {playable ? (
-          <button type="button" className="pixel-btn pixel-btn-tiny" onClick={onToggleAll}>
-            {showAll ? "Hide list" : "Show all"}
-          </button>
-        ) : (
-          <button type="button" className="pixel-btn pixel-btn-tiny" onClick={onSkip}>
-            Skip intro
-          </button>
-        )}
+        <div className="hud-tools">
+          {playable ? (
+            <button type="button" className="pixel-btn pixel-btn-tiny" onClick={onToggleAll}>
+              {showAll ? "Hide list" : "Show all"}
+            </button>
+          ) : (
+            <button type="button" className="pixel-btn pixel-btn-tiny" onClick={onSkip}>
+              Skip intro
+            </button>
+          )}
+        </div>
       </div>
 
       {showAll && playable ? (

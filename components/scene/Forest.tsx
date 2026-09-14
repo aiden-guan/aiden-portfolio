@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { isCompactScene } from "@/lib/device";
 
 const CLEARING = 14.8;
 const OUTER = 62;
@@ -17,8 +18,7 @@ function mulberry32(seed: number) {
 
 function treeBudget() {
   if (typeof window === "undefined") return 220;
-  const mobile = window.matchMedia("(max-width: 768px)").matches;
-  return mobile ? 160 : 260;
+  return isCompactScene() ? 160 : 260;
 }
 
 type Tree = {

@@ -5,6 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { CRATER, craterAmount, cutsceneClock, grassPulse, type CutscenePhase } from "@/lib/cutscene";
 import { mailbox, relics } from "@/lib/content";
+import { isCompactScene } from "@/lib/device";
 import { meadowMouse, PART_RADIUS } from "@/lib/meadow-mouse";
 
 const CLEARING = 2.7;
@@ -118,9 +119,8 @@ function mulberry32(seed: number) {
 
 function bladeSpacing(reducedMotion: boolean) {
   if (typeof window === "undefined") return 0.32;
-  const mobile = window.matchMedia("(max-width: 768px)").matches;
   if (reducedMotion) return 0.32;
-  if (mobile) return 0.26;
+  if (isCompactScene()) return 0.26;
   return 0.2;
 }
 

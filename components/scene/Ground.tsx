@@ -8,6 +8,7 @@ import {
   isInspectClick,
   meadowMouse,
   meadowPointer,
+  plantMeadowProbe,
   PART_RADIUS,
   PATCH_RADIUS,
 } from "@/lib/meadow-mouse";
@@ -130,16 +131,13 @@ export function Ground({
       position={[0, -0.01, 0]}
       material={material}
       onPointerMove={(event) => {
-        meadowPointer.armed = true;
-        meadowMouse.set(event.point.x, 0, event.point.z);
+        plantMeadowProbe(event.point.x, event.point.z);
       }}
       onPointerDown={(event) => {
-        meadowPointer.armed = true;
-        meadowMouse.set(event.point.x, 0, event.point.z);
+        plantMeadowProbe(event.point.x, event.point.z);
       }}
       onClick={(event) => {
-        meadowPointer.armed = true;
-        meadowMouse.set(event.point.x, 0, event.point.z);
+        plantMeadowProbe(event.point.x, event.point.z);
         if (!isInspectClick()) return;
         if (phase === "awaiting") {
           if (Math.hypot(meadowMouse.x, meadowMouse.z) < PATCH_RADIUS) onStartCutscene();
