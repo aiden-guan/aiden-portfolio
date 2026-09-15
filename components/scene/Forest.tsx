@@ -1,11 +1,79 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef } from "react";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { HERO_CAMERA_TARGET } from "@/lib/cutscene";
 import { isCompactScene } from "@/lib/device";
 
 const CLEARING = 14.8;
 const OUTER = 62;
+
+const treeTarget = { value: HERO_CAMERA_TARGET.clone() };
+
+function withCameraFade(material: THREE.MeshBasicMaterial) {
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uTarget = treeTarget;
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+        varying float vGhost;
+        varying vec3 vWorldFade;
+        uniform vec3 uTarget;`,
+      )
+      .replace(
+        "#include <project_vertex>",
+        `#include <project_vertex>
+        vec4 worldFade = vec4(transformed, 1.0);
+        #ifdef USE_INSTANCING
+          worldFade = instanceMatrix * worldFade;
+        #endif
+        worldFade = modelMatrix * worldFade;
+        vWorldFade = worldFade.xyz;
+        vec3 origin;
+        float rad;
+        #ifdef USE_INSTANCING
+          origin = (modelMatrix * instanceMatrix * vec4(0.0, 0.42, 0.0, 1.0)).xyz;
+          rad = max(
+            length((instanceMatrix * vec4(1.0, 0.0, 0.0, 0.0)).xyz),
+            length((instanceMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz) * 0.55
+          );
+        #else
+          origin = (modelMatrix * vec4(0.0, 0.42, 0.0, 1.0)).xyz;
+          rad = 2.0;
+        #endif
+        float envelope = rad + 6.5;
+        float inside = 1.0 - smoothstep(envelope * 0.12, envelope, distance(cameraPosition, origin));
+        vec3 pa = origin - cameraPosition;
+        vec3 ba = uTarget - cameraPosition;
+        float t = clamp(dot(pa, ba) / max(dot(ba, ba), 0.0001), 0.0, 1.0);
+        float blocking = 1.0 - smoothstep(rad * 0.15, rad * 1.35, length(pa - ba * t));
+        blocking *= 1.0 - smoothstep(7.0, 16.0, length(pa));
+        vGhost = max(inside, blocking);`,
+      );
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+        varying float vGhost;
+        varying vec3 vWorldFade;`,
+      )
+      .replace(
+        "#include <opaque_fragment>",
+        `float camDist = distance(vWorldFade, cameraPosition);
+        if (vGhost > 0.28 || camDist < 9.2) discard;
+        float nearFade = smoothstep(9.2, 13.5, camDist);
+        float fade = nearFade * (1.0 - vGhost);
+        vec2 grid = floor(gl_FragCoord.xy * 0.22);
+        float dither = fract(grid.x * 0.37 + grid.y * 0.61 + grid.x * grid.y * 0.09);
+        if (dither > fade) discard;
+        #include <opaque_fragment>`,
+      );
+  };
+  material.customProgramCacheKey = () => "tree-cam-fade-v5";
+  return material;
+}
 
 function mulberry32(seed: number) {
   return () => {
@@ -123,11 +191,11 @@ export function Forest() {
   }, []);
 
   const trunkMat = useMemo(
-    () => new THREE.MeshBasicMaterial({ color: "#3a281c" }),
+    () => withCameraFade(new THREE.MeshBasicMaterial({ color: "#3a281c" })),
     [],
   );
   const canopyMat = useMemo(
-    () => new THREE.MeshBasicMaterial({ color: "#ffffff" }),
+    () => withCameraFade(new THREE.MeshBasicMaterial({ color: "#ffffff" })),
     [],
   );
 
@@ -192,6 +260,11 @@ export function Forest() {
     canopyMesh.instanceMatrix.needsUpdate = true;
     if (canopyMesh.instanceColor) canopyMesh.instanceColor.needsUpdate = true;
   }, [canopyCount, trees]);
+
+  useFrame((state) => {
+    const controls = state.controls as unknown as { target?: THREE.Vector3 } | undefined;
+    treeTarget.value.copy(controls?.target ?? HERO_CAMERA_TARGET);
+  });
 
   return (
     <group>

@@ -129,10 +129,10 @@ function MeadowLook({
       enabled={canOrbit(phase)}
       enableDamping={!reducedMotion && canOrbit(phase)}
       dampingFactor={0.08}
-      minPolarAngle={compact ? 0.52 : 0.62}
-      maxPolarAngle={compact ? 1.18 : Math.PI / 2.05}
-      minDistance={compact ? 13 : 11}
-      maxDistance={compact ? 30 : 32}
+      minPolarAngle={0.62}
+      maxPolarAngle={Math.PI / 2.05}
+      minDistance={compact ? 18 : 11}
+      maxDistance={compact ? 42 : 32}
       target={[HERO_CAMERA_TARGET.x, HERO_CAMERA_TARGET.y, HERO_CAMERA_TARGET.z]}
       rotateSpeed={0.62}
       zoomSpeed={0.65}

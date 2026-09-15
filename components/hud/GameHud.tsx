@@ -32,9 +32,7 @@ export function GameHud({
         ? `${total} buried. ${found} found.`
         : "You found everything."
     : phase === "awaiting"
-      ? coarse
-        ? "Tap the empty patch."
-        : "What's that in the middle?"
+      ? "What's that in the middle?"
       : "…";
 
   return (
