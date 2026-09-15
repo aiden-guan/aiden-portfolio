@@ -11,6 +11,14 @@ export function ImpactOverlay() {
 
   useEffect(() => {
     let id = 0;
+    const rootEl = root.current;
+    if (rootEl) {
+      rootEl.style.opacity = "0.001";
+      rootEl.style.willChange = "opacity";
+    }
+    const primed = window.requestAnimationFrame(() => {
+      if (root.current) root.current.style.opacity = "0";
+    });
     const tick = () => {
       const age = impactFX.age;
       const live = age >= 0 && age < 0.46;
@@ -38,7 +46,10 @@ export function ImpactOverlay() {
       id = window.requestAnimationFrame(tick);
     };
     id = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(id);
+    return () => {
+      window.cancelAnimationFrame(primed);
+      window.cancelAnimationFrame(id);
+    };
   }, []);
 
   return (

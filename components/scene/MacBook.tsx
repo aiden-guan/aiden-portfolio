@@ -338,10 +338,8 @@ export function MeadowLaptop({
       fallingLaptopPose(1, fallPos, fallEuler);
       fallQuat.setFromEuler(fallEuler);
       const age = Math.max(0, impactFX.age);
-      const freeze = age < 0.05;
-      const slamAge = freeze ? 0 : age - 0.05;
-      const slam = freeze ? 0.12 : 1 - Math.exp(-slamAge * 18);
-      const squash = freeze ? 1 : Math.exp(-slamAge * 13);
+      const slam = 1 - Math.exp(-age * 18);
+      const squash = Math.exp(-age * 13);
       group.position.lerpVectors(fallPos, LAPTOP_CRASH, slam);
       group.position.y -= squash * 0.28;
       punchQuat.setFromEuler(scratchEuler.set(squash * 0.42, squash * 0.16, squash * 0.28));

@@ -20,7 +20,8 @@ export type CursorKind = "grass" | "hot" | "exclaim";
 export const CUTSCENE_STORAGE_KEY = "meadow-intro-done";
 
 export const HERO_CAMERA_POSITION = new THREE.Vector3(-2.4, 8.2, 13.4);
-export const HERO_CAMERA_POSITION_COMPACT = new THREE.Vector3(-3.4, 11.4, 20.2);
+/** High inside the clearing so the inner canopy sits under the lens, not in front of it. */
+export const HERO_CAMERA_POSITION_COMPACT = new THREE.Vector3(-1.85, 15.75, 10.0);
 export const HERO_CAMERA_TARGET = new THREE.Vector3(0, 0.25, 0.15);
 export const HERO_CAMERA_FOV = 42;
 export const HERO_CAMERA_FOV_COMPACT = 42;
@@ -49,6 +50,8 @@ export const WALK_END = { x: -1.78, z: 0.42 };
 export const IDLE_STAND = { x: -1.68, z: 0.78 };
 
 export const LAPTOP_STRIKE = new THREE.Vector3(0.12, 0.08, 0.04);
+/** Origin height where the scaled laptop body meets the dirt. */
+export const LAPTOP_CONTACT_Y = LAPTOP_STRIKE.y + 0.06;
 export const LAPTOP_CRASH = new THREE.Vector3(0.16, -0.48, 0.04);
 export const LAPTOP_CRASH_EULER = new THREE.Euler(1.34, 0.92, 0.5);
 export const LAPTOP_FALL_Y = 9.8;
@@ -149,8 +152,10 @@ export function craterFormed(phase: CutscenePhase) {
 
 export function craterAmount(phase: CutscenePhase, _t?: number) {
   if (impactFX.age >= 0) {
-    const punch = Math.exp(-Math.min(impactFX.age, 3) * 16);
-    return 1 + punch * 0.4;
+    const age = impactFX.age;
+    const form = 1 - Math.exp(-age * 20);
+    const punch = Math.exp(-Math.min(age, 3) * 14);
+    return 0.38 + 0.62 * form + punch * 0.22 * (1 - form);
   }
   return craterFormed(phase) ? 1 : 0;
 }

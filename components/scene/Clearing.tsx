@@ -1,7 +1,7 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import {
   CRATER,
@@ -104,7 +104,11 @@ export function Clearing({
   );
   const rubble = useRef<THREE.InstancedMesh>(null);
   const armed = useRef(-2);
+  const warmed = useRef(false);
   const gravity = useRef({ dirt: 22, rock: 16, ember: 7.5, dust: 5.4 });
+  const gl = useThree((state) => state.gl);
+  const scene = useThree((state) => state.scene);
+  const camera = useThree((state) => state.camera);
 
   useLayoutEffect(() => {
     if (dirt.current) dirt.current.raycast = () => {};
@@ -116,13 +120,86 @@ export function Clearing({
     if (rubble.current) rubble.current.raycast = () => {};
   }, []);
 
+  useEffect(() => {
+    const seed = (mesh: THREE.InstancedMesh | null) => {
+      if (!mesh) return;
+      dummy.position.set(0, 0.2, 0);
+      dummy.rotation.set(0, 0, 0);
+      dummy.scale.setScalar(0.25);
+      dummy.updateMatrix();
+      for (let i = 0; i < mesh.count; i += 1) mesh.setMatrixAt(i, dummy.matrix);
+      mesh.instanceMatrix.needsUpdate = true;
+    };
+
+    const show = (obj: THREE.Object3D | null) => {
+      if (!obj) return false;
+      const was = obj.visible;
+      obj.visible = true;
+      return !was;
+    };
+
+    const hide = (obj: THREE.Object3D | null, restore: boolean) => {
+      if (obj && restore) obj.visible = false;
+    };
+
+    const warm = () => {
+      if (warmed.current) return;
+      warmed.current = true;
+      seed(dirt.current);
+      seed(rocks.current);
+      seed(embers.current);
+      seed(dust.current);
+      seed(streaks.current);
+      seed(rubble.current);
+      const craterWas = show(crater.current);
+      const fireWas = show(fireball.current);
+      const glowWas = show(glow.current);
+      const shockAWas = show(shockA.current);
+      const shockBWas = show(shockB.current);
+      const dirtWas = show(dirt.current);
+      const rockWas = show(rocks.current);
+      const emberWas = show(embers.current);
+      const dustWas = show(dust.current);
+      const streakWas = show(streaks.current);
+      const rubbleWas = show(rubble.current);
+      if (fireball.current) fireball.current.scale.setScalar(1);
+      if (glow.current) glow.current.scale.setScalar(1);
+      if (shockA.current) shockA.current.scale.set(1, 1, 1);
+      if (shockB.current) shockB.current.scale.set(1, 1, 1);
+      const heat0 = heat.current?.intensity ?? 0;
+      const core0 = core.current?.intensity ?? 0;
+      if (heat.current) heat.current.intensity = 8;
+      if (core.current) core.current.intensity = 4;
+      gl.compile(scene, camera);
+      if (heat.current) heat.current.intensity = heat0;
+      if (core.current) core.current.intensity = core0;
+      hide(crater.current, craterWas);
+      hide(fireball.current, fireWas);
+      hide(glow.current, glowWas);
+      hide(shockA.current, shockAWas);
+      hide(shockB.current, shockBWas);
+      hide(dirt.current, dirtWas);
+      hide(rocks.current, rockWas);
+      hide(embers.current, emberWas);
+      hide(dust.current, dustWas);
+      hide(streaks.current, streakWas);
+      hide(rubble.current, rubbleWas);
+    };
+
+    const timeout = window.setTimeout(warm, 120);
+    if (phase === "falling" || phase === "impact") {
+      window.clearTimeout(timeout);
+      warm();
+    }
+    return () => window.clearTimeout(timeout);
+  }, [camera, dummy, gl, phase, scene]);
+
   useFrame((state, delta) => {
     const time = state.clock.elapsedTime;
     const amount = craterAmount(cutsceneClock.phase, cutsceneClock.t);
     const age = impactFX.age;
     const struck = age >= 0;
     const punch = struck ? Math.exp(-age * 16) : 0;
-    const freeze = struck && age < 0.05;
 
     if (ring.current) {
       const pulse = phase === "awaiting" ? 0.18 + Math.sin(time * 2.2) * 0.1 : 0.06;
@@ -135,8 +212,8 @@ export function Clearing({
       const show = amount > 0.001;
       craterGroup.visible = show;
       if (show) {
-        const grow = reducedMotion ? 1 : 0.86 + Math.min(amount, 1) * 0.14 + punch * 0.28;
-        const depth = reducedMotion ? 1 : 0.78 + Math.min(amount, 1) * 0.22 + punch * 0.42;
+        const grow = reducedMotion ? 1 : 0.7 + Math.min(amount, 1.2) * 0.3;
+        const depth = reducedMotion ? 1 : 0.52 + Math.min(amount, 1.2) * 0.48;
         craterGroup.scale.set(grow, depth, grow);
       }
     }
@@ -238,7 +315,7 @@ export function Clearing({
     armed.current = impactFX.age;
 
     const burstLive = struck && age < 1.35 && !reducedMotion;
-    const sim = freeze ? 0 : delta;
+    const sim = delta;
 
     const stepChunks = (
       mesh: THREE.InstancedMesh | null,
@@ -345,23 +422,23 @@ export function Clearing({
           <ringGeometry args={[CRATER.rim * 0.92, CRATER.outer, 40]} />
           <meshStandardMaterial color="#4a3a24" roughness={1} side={THREE.DoubleSide} />
         </mesh>
-        <pointLight
-          ref={heat}
-          position={[0, 0.35, 0]}
-          color="#ff9a3c"
-          intensity={0}
-          distance={14}
-          decay={2}
-        />
-        <pointLight
-          ref={core}
-          position={[0, 0.12, 0]}
-          color="#fff4d8"
-          intensity={0}
-          distance={7}
-          decay={2}
-        />
       </group>
+      <pointLight
+        ref={heat}
+        position={[0, 0.35, 0]}
+        color="#ff9a3c"
+        intensity={0}
+        distance={14}
+        decay={2}
+      />
+      <pointLight
+        ref={core}
+        position={[0, 0.12, 0]}
+        color="#fff4d8"
+        intensity={0}
+        distance={7}
+        decay={2}
+      />
 
       <mesh ref={fireball} visible={false} position={[0, 0.22, 0]}>
         <sphereGeometry args={[1, 18, 14]} />

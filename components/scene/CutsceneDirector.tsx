@@ -7,6 +7,7 @@ import {
   cutsceneClock,
   grassPulse,
   impactFX,
+  LAPTOP_CONTACT_Y,
   LAPTOP_FALL_Y,
   LAPTOP_STRIKE,
   PHASE_DURATION,
@@ -49,15 +50,21 @@ export function CutsceneDirector({
       armed.current = "awaiting";
     }
 
-    const freeze = impactFX.age >= 0 && impactFX.age < 0.048;
-    const sim = freeze ? dt * 0.07 : dt;
+    const freeze = impactFX.age >= 0 && impactFX.age < 0.04;
+    const sim = freeze ? dt * 0.12 : dt;
 
     cutsceneClock.t += sim;
     if (impactFX.age >= 0) impactFX.age += dt;
 
     if (cutsceneClock.phase === "falling" && impactFX.age < 0) {
       const u = THREE.MathUtils.clamp(cutsceneClock.t / PHASE_DURATION.falling, 0, 1);
-      if (fallingHeight(u) <= LAPTOP_STRIKE.y + 0.22) strikeImpact();
+      if (fallingHeight(u) <= LAPTOP_CONTACT_Y) {
+        strikeImpact();
+        armed.current = "impact";
+        cutsceneClock.phase = "impact";
+        cutsceneClock.t = 0;
+        onPhase("impact");
+      }
     }
 
     if (impactFX.age >= 0 && impactFX.age < 1.15) {
@@ -81,7 +88,6 @@ export function CutsceneDirector({
       armed.current = next;
       cutsceneClock.phase = next;
       cutsceneClock.t = 0;
-      if (next === "impact") strikeImpact();
       onPhase(next);
     }
   });
